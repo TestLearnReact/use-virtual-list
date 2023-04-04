@@ -14,8 +14,9 @@
 		"es6": true
 	},
 	"rules": {
-		"quotes": ["error", "single"] // you can remove if you want
+		"quotes": ["error", "single"], // you can remove if you want
 		// Add your custom rules here
+		"no-debugger": "off"
 	},
 	"settings": {
 		"react": {
