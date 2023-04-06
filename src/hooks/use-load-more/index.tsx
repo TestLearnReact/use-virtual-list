@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
-
+import { useEffect } from 'react';
 import { TSetCachValue } from '../use-cache';
 import { TCacheValues } from '../use-cache/types';
-import { Measure, LoadMoreEvent, LoadMoreType } from '../../types';
+import { Measure, LoadMoreType } from '../../types';
 import { getLastArrItem } from '../../utils';
 
 export const useLoadMore = ({
@@ -14,13 +13,17 @@ export const useLoadMore = ({
 	msDataRef: React.MutableRefObject<Measure[]>;
 	cache: TCacheValues;
 	setCacheValue: TSetCachValue;
-	loadMoreProps: LoadMoreType;
+	loadMoreProps?: LoadMoreType;
 }) => {
-	const { loadMore, loadMoreCount, isItemLoaded } = loadMoreProps;
-
-	const onLoadMoreMemo = useMemo(() => {
-		if (msDataRef.current.length <= 0 || cache.visibleItemRange.length <= 0)
+	useEffect(() => {
+		if (
+			msDataRef.current.length <= 0 ||
+			cache.visibleItemRange.length <= 0 ||
+			!loadMoreProps
+		)
 			return;
+
+		const { loadMore, loadMoreCount, isItemLoaded } = loadMoreProps;
 
 		const vStop = getLastArrItem(cache.visibleItemRange);
 		const loadIndex = Math.max(
@@ -37,20 +40,25 @@ export const useLoadMore = ({
 			!isItemLoaded(loadIndex) &&
 			cache.prevValues.prevVStop !== stopIndex
 		) {
-			//debugger;
 			loadMore({
 				startIndex,
-				stopIndex, //: startIndex + loadMoreCount - 1,
+				stopIndex,
 				loadIndex,
 				scrollOffset: cache.scrollData.scrollOffsetY,
-				userScroll: true, //false,
+				userScroll: true,
 			});
 
-			cache.prevValues.prevVStop = stopIndex;
-			// setCacheValue({
-			//   key: 'prevVStop',
-			//   value: startIndex + loadMoreCount - 1,
-			// });
+			setCacheValue({
+				key: 'prevValues',
+				value: { prevVStop: startIndex + loadMoreCount - 1 },
+			});
 		}
-	}, [msDataRef.current, cache.visibleItemRange]); //cache.scrollData,
+	}, [
+		msDataRef,
+		loadMoreProps,
+		setCacheValue,
+		cache.visibleItemRange,
+		cache.scrollData,
+		cache.prevValues.prevVStop,
+	]);
 };
