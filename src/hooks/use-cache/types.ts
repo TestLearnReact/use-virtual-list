@@ -18,9 +18,9 @@ export type TCacheValues = {
 	loadMore: (event: LoadMoreEvent) => void;
 	isItemLoaded: (index: number) => boolean;
 	prevValues: {
-		viewportWidth: number;
-		viewportHeight: number;
-		prevVStop: number;
+		viewportWidth?: number;
+		viewportHeight?: number;
+		prevVStop?: number;
 	};
 	scrollData: {
 		scrollOffsetX: number;
