@@ -18,7 +18,7 @@ export function needNewCalcVisbleRange<
 	msDataRef: MutableRefObject<Measure[]>;
 	cache: TCacheValues;
 	///refInnerContainer: React.MutableRefObject<I | undefined>; // todo check type / size as parameter
-	refOuterContainer: React.MutableRefObject<O | undefined>; // todo check type / size as parameter
+	refOuterContainer: React.RefObject<HTMLElement | undefined>; //React.MutableRefObject<O | undefined>; // todo check type / size as parameter
 	totalSize: number;
 	useWindowScroll: boolean;
 }) {

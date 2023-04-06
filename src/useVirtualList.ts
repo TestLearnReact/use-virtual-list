@@ -1,5 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-
+//import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+	RefCallback,
+	RefObject,
+	useCallback,
+	useEffect,
+	useRef,
+	useMemo,
+	useState,
+} from 'react';
 import {
 	Direction,
 	IHookReturn,
@@ -44,8 +52,8 @@ export function useVirtualList<
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	// const refOuterContainer = useRef<O>();
 	// const refInnerContainer = useRef<I>();
-	const refOuterContainer = useRef<O>(null);
-	const refInnerContainer = useRef<I>(null);
+	const refOuterContainer = useRef<O | null>(null);
+	const refInnerContainer = useRef<I | null>(null);
 
 	const [hookReturnState, setHookReturnState] = useState<{
 		visibleItems: VisibleItemDescriptor<ItemType>[];
@@ -146,22 +154,18 @@ export function useVirtualList<
 
 			const visibleItems = range.map(
 				(itemIndex): VisibleItemDescriptor<ItemType> => {
-					try {
-						const item = items[itemIndex];
-						const size = msDataRef.current[itemIndex].size;
-						const offset = msDataRef.current[itemIndex].start;
+					const item = items[itemIndex];
+					const size = msDataRef.current[itemIndex].size;
+					const offset = msDataRef.current[itemIndex].start;
 
-						// todo return msDataRef, listDirection in other: {} eg.
-						return {
-							item,
-							itemIndex,
-							size,
-							offset,
-							listDirection,
-						};
-					} catch (error) {
-						debugger;
-					}
+					// todo return msDataRef, listDirection in other: {} eg.
+					return {
+						item,
+						itemIndex,
+						size,
+						offset,
+						listDirection,
+					};
 				}
 			);
 
@@ -199,12 +203,6 @@ export function useVirtualList<
 		setCacheValue,
 	});
 
-	useIsomorphicLayoutEffect(() => {
-		if (xinnerRef?.current !== null)
-			refInnerContainer.current = xinnerRef.current;
-		if (xouterRef?.current !== null)
-			refOuterContainer.current = xouterRef.current;
-	}, [xouterRef, xinnerRef]);
 	/**
 	 *
 	 *   INIT
@@ -237,37 +235,42 @@ export function useVirtualList<
 		cache.prevValues.viewportWidth = viewportWidth;
 	}, [items, items.length, itemOffsets]);
 
+	useIsomorphicLayoutEffect(() => {
+		if (xinnerRef) refInnerContainer.current = xinnerRef.current;
+		if (xouterRef) refOuterContainer.current = xouterRef.current;
+	}, [xouterRef, xinnerRef]);
+
 	// /**
 	//  * prevent rerender / use useRef or ref={refOuter} in parent component
 	//  * */
 	// const refCallbackOuter = useResolvedElement<O>(
-	//   useCallback((element) => {
-	//     console.log('outer: ', element.getBoundingClientRect());
-	//     refOuterContainer.current = element;
-	//   }, []),
-	//   xouterRef,
+	// 	useCallback((element) => {
+	// 		console.log('outer: ', element.getBoundingClientRect());
+	// 		refOuterContainer.current = element;
+	// 	}, []),
+	// 	xouterRef
 	// );
 
 	// /**
 	//  * prevent rerender / use useRef or ref={refInner} in parent component
 	//  * */
 	// const refCallbackInner = useResolvedElement<I>(
-	//   useCallback(
-	//     (element) => {
-	//       console.log('inner: ', element.getBoundingClientRect());
-	//       // setRerender(!rerender);
-	//       refInnerContainer.current = element;
-	//     },
-	//     [refInnerContainer.current?.offsetHeight],
-	//   ),
-	//   xinnerRef,
+	// 	useCallback(
+	// 		(element) => {
+	// 			console.log('inner: ', element.getBoundingClientRect());
+	// 			// setRerender(!rerender);
+	// 			refInnerContainer.current = element;
+	// 		},
+	// 		[refInnerContainer.current?.offsetHeight]
+	// 	),
+	// 	xinnerRef
 	// );
 
 	return {
 		// refOuter: useMemo(() => refCallbackOuter, [refCallbackOuter]),
 		// refInner: useMemo(() => refCallbackInner, [refCallbackInner]),
-		refOuter: xouterRef,
-		refInner: xinnerRef,
+		refOuter: refOuterContainer,
+		refInner: refInnerContainer,
 		visibleItems: hookReturnState.visibleItems, // visibleItems,
 		containerStyles: {
 			outer: { ...outerContainerStyle },
@@ -288,3 +291,87 @@ export function useVirtualList<
 //     listDirection,
 //   },
 // };
+
+// todo declared twice hooks
+
+type SubscriberCleanupFunction = () => void;
+type SubscriberResponse = SubscriberCleanupFunction | void;
+
+// This could've been more streamlined with internal state instead of abusing
+// refs to such extent, but then composing hooks and components could not opt out of unnecessary renders.
+export default function useResolvedElement<T extends Element>(
+	subscriber: (element: T) => SubscriberResponse,
+	refOrElement?: T | RefObject<T> | null
+): RefCallback<T> {
+	const lastReportRef = useRef<{
+		element: T | null;
+		subscriber: typeof subscriber;
+		cleanup?: SubscriberResponse;
+	} | null>(null);
+	const refOrElementRef = useRef<typeof refOrElement>(null);
+	refOrElementRef.current = refOrElement;
+	const cbElementRef = useRef<T | null>(null);
+
+	// Calling re-evaluation after each render without using a dep array,
+	// as the ref object's current value could've changed since the last render.
+	useEffect(() => {
+		evaluateSubscription();
+	});
+
+	const evaluateSubscription = useCallback(() => {
+		const cbElement = cbElementRef.current;
+		const refOrElement = refOrElementRef.current;
+		// console.log(
+		//   cbElement,
+		//   refOrElement,
+		//   refOrElement instanceof Element,
+		//   //refOrElement.current,
+		// );
+		// Ugly ternary. But smaller than an if-else block.
+		const element: T | null = cbElement
+			? cbElement
+			: refOrElement
+			? refOrElement instanceof Element
+				? refOrElement
+				: refOrElement.current
+			: null;
+
+		if (
+			lastReportRef.current &&
+			lastReportRef.current.element === element &&
+			lastReportRef.current.subscriber === subscriber
+		) {
+			return;
+		}
+		// debugger;
+		if (lastReportRef.current && lastReportRef.current.cleanup) {
+			lastReportRef.current.cleanup();
+		}
+		lastReportRef.current = {
+			element,
+			subscriber,
+			// Only calling the subscriber, if there's an actual element to report.
+			// Setting cleanup to undefined unless a subscriber returns one, as an existing cleanup function would've been just called.
+			cleanup: element ? subscriber(element) : undefined,
+		};
+	}, [subscriber]);
+
+	// making sure we call the cleanup function on unmount
+	useEffect(() => {
+		return () => {
+			if (lastReportRef.current && lastReportRef.current.cleanup) {
+				lastReportRef.current.cleanup();
+				lastReportRef.current = null;
+			}
+		};
+	}, []);
+
+	return useCallback(
+		(element) => {
+			cbElementRef.current = element;
+			evaluateSubscription();
+		},
+		[evaluateSubscription]
+	);
+}
+export { useResolvedElement };

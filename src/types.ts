@@ -8,8 +8,8 @@ export interface IHookReturn<
 	// // onScroll: UIEventHandler;
 	getMeasuredItem: MeasuredItemGetter; // ItemOffsetGetter;
 	scrollingSpeed: number;
-	refOuter: RefCallback<O>;
-	refInner: RefCallback<I>;
+	refOuter: RefObject<O> | O | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<O>;
+	refInner: RefObject<I> | I | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<I>;
 	visibleItems: VisibleItemDescriptor<ItemType>[];
 	containerStyles: {
 		outer: { height: number; width: number };
@@ -64,8 +64,8 @@ export interface IVirtualListProps<
 > {
 	viewportHeight: number;
 	viewportWidth: number;
-	xouterRef?: RefObject<O> | O | null | undefined;
-	xinnerRef?: RefObject<I> | I | null | undefined;
+	xouterRef?: RefObject<O> | null | undefined; //| O
+	xinnerRef?: RefObject<I> | null | undefined; //| I
 	items: ItemType[];
 	itemSize: number | ItemSizeGetter<ItemType>;
 	listSize?: number;

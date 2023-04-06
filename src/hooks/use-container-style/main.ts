@@ -16,8 +16,8 @@ export const useContainerStyle = <
 	msDataRef: React.MutableRefObject<Measure[]>;
 	cache: TCacheValues;
 	itemsLength: number;
-	refOuterContainer: React.MutableRefObject<O | undefined>;
-	refInnerContainer: React.MutableRefObject<I | undefined>;
+	refOuterContainer: React.RefObject<O>; //React.MutableRefObject<O | undefined>;
+	refInnerContainer: React.RefObject<I>; //React.MutableRefObject<I | undefined>;
 }) => {
 	// const [stateStyle, setStateStyle] = useState<{
 	//   outerContainerStyle: {
