@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { MutableRefObject, useCallback, useRef, useState } from 'react';
 
 import { VerticalList } from '../vertical-list';
 import { IDataItem, data } from '../../data';
 import { LoadMoreEvent } from '../../../src/types'; // todo
 import { useVirtualList } from '../../../src';
+import { TestHook } from './test';
 
 export const LIST_HEIGHT = 600;
 export const LIST_WIDTH = 600;
@@ -51,34 +52,37 @@ export const ListTypes: React.FC = () => {
 
 	const [fetchedData, setFetchedData] = useState<IDataItem[]>([]);
 
-	const { visibleItems, containerStyles, msDataRef } = useVirtualList({
+	const {
+		visibleItems,
+		containerStyles,
+		// refOuter: refOuterWrapper,
+		// refInner: refInnerWrapper,
+	} = useVirtualList<IDataItem, HTMLDivElement, HTMLDivElement>({
 		viewportHeight: 100,
 		viewportWidth: 100,
 		xouterRef: refOuterWrapper,
 		xinnerRef: refInnerWrapper,
 		items: data,
-		itemSize: 300,
+		itemSize: 200,
 		listSize: LIST_HEIGHT, //937,
 		listDirection: 0,
 		overscan: 1, // >=1 todo getVisibleItemsRange needNewCalcVisbleRange
 		useWindowScroll: false,
-		loadMore: (event) => {
-			loadData(event, setFetchedData);
+		loadMoreProps: {
+			loadMore: (event) => {
+				loadData(event, setFetchedData);
 
-			return console.log('LOAD_MORE', event);
-		},
-		loadMoreCount: 5,
-		isItemLoaded: (loadIndex) => {
-			const lo =
-				isItemLoadedArr[loadIndex] && isItemLoadedArr[loadIndex] == true;
-			console.log('isItemLoadedArr[loadIndex]', lo);
-			return lo;
+				return console.log('LOAD_MORE', event);
+			},
+			loadMoreCount: 5,
+			isItemLoaded: (loadIndex) => {
+				const lo =
+					isItemLoadedArr[loadIndex] && isItemLoadedArr[loadIndex] == true;
+				console.log('isItemLoadedArr[loadIndex]', lo, loadIndex);
+				return lo;
+			},
 		},
 	});
-
-	const height = containerStyles.inner.totalSize;
-
-	console.log(height, visibleItems, msDataRef);
 
 	return (
 		<>
@@ -129,3 +133,19 @@ export const ListTypes: React.FC = () => {
 		</>
 	);
 };
+
+// const height = containerStyles.inner.totalSize;
+
+// const refNode = useCallback((node: HTMLDivElement) => {
+// 	console.log('refNode', node);
+// }, []);
+
+// const { outerRef, innerRef } = TestHook<HTMLDivElement, HTMLDivElement>();
+// // const outerRef: React.MutableRefObject<HTMLDivElement | null>
+
+// const refOuterWrapper = useRef(null);
+// const refInnerWrapper = useRef<HTMLDivElement>(null);
+// const { outerRef: a } = TestHook({
+// 	or: refOuterWrapper,
+// 	ir: refInnerWrapper,
+// });

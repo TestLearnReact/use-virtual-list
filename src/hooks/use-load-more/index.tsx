@@ -2,24 +2,22 @@ import { useMemo } from 'react';
 
 import { TSetCachValue } from '../use-cache';
 import { TCacheValues } from '../use-cache/types';
-import { Measure, LoadMoreEvent } from '../../types';
+import { Measure, LoadMoreEvent, LoadMoreType } from '../../types';
 import { getLastArrItem } from '../../utils';
 
 export const useLoadMore = ({
 	msDataRef,
 	cache,
-	loadMoreCount,
-	loadMore,
-	isItemLoaded,
+	loadMoreProps,
 	setCacheValue,
 }: {
 	msDataRef: React.MutableRefObject<Measure[]>;
 	cache: TCacheValues;
-	loadMoreCount: number;
-	loadMore: (event: LoadMoreEvent) => void;
-	isItemLoaded: (index: number) => boolean;
 	setCacheValue: TSetCachValue;
+	loadMoreProps: LoadMoreType;
 }) => {
+	const { loadMore, loadMoreCount, isItemLoaded } = loadMoreProps;
+
 	const onLoadMoreMemo = useMemo(() => {
 		if (msDataRef.current.length <= 0 || cache.visibleItemRange.length <= 0)
 			return;

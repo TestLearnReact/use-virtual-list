@@ -8,8 +8,8 @@ export interface IHookReturn<
 	// // onScroll: UIEventHandler;
 	getMeasuredItem: MeasuredItemGetter; // ItemOffsetGetter;
 	scrollingSpeed: number;
-	refOuter: RefObject<O> | O | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<O>;
-	refInner: RefObject<I> | I | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<I>;
+	refOuter: RefObject<O> | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<O>; | O
+	refInner: RefObject<I> | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<I>; | I
 	visibleItems: VisibleItemDescriptor<ItemType>[];
 	containerStyles: {
 		outer: { height: number; width: number };
@@ -57,6 +57,12 @@ export interface LoadMoreEvent {
 	readonly userScroll: boolean;
 }
 
+export type LoadMoreType = {
+	isItemLoaded: (index: number) => boolean;
+	loadMoreCount: number;
+	loadMore: (event: LoadMoreEvent) => void;
+};
+
 export interface IVirtualListProps<
 	ItemType,
 	O extends HTMLElement = HTMLElement,
@@ -71,8 +77,6 @@ export interface IVirtualListProps<
 	listSize?: number;
 	listDirection?: Direction;
 	overscan?: number;
-	isItemLoaded: (index: number) => boolean;
-	loadMoreCount: number;
-	loadMore: (event: LoadMoreEvent) => void;
 	useWindowScroll?: boolean;
+	loadMoreProps: LoadMoreType;
 }

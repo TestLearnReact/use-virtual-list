@@ -1,12 +1,4 @@
-import {
-	RefCallback,
-	RefObject,
-	useCallback,
-	useEffect,
-	useRef,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
 	Direction,
 	IHookReturn,
@@ -42,13 +34,9 @@ export function useVirtualList<
 	listSize = 0,
 	listDirection = Direction.Vertical,
 	overscan = 10,
-	isItemLoaded,
-	loadMore,
-	loadMoreCount = 5,
+	loadMoreProps,
 	useWindowScroll = false,
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
-	// const refOuterContainer = useRef<O>();
-	// const refInnerContainer = useRef<I>();
 	const refOuterContainer = useRef<O | null>(null);
 	const refInnerContainer = useRef<I | null>(null);
 
@@ -126,7 +114,7 @@ export function useVirtualList<
 						useWindowScroll,
 					}))
 			) {
-				// return;
+				return;
 			}
 
 			const range = getExtendedVisibleItemRange(
@@ -187,16 +175,14 @@ export function useVirtualList<
 
 	const getMeasuredItem = useCallback(
 		(itemIndex: number) => msDataRef.current[itemIndex],
-		[msDataRef.current, itemsSnapshotSignature] //  itemOffsets
+		[msDataRef] //  itemOffsets msDataRef.current itemsSnapshotSignature !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	);
 
 	/** Fetch more data */
 	useLoadMore({
 		cache,
 		msDataRef,
-		isItemLoaded,
-		loadMore,
-		loadMoreCount,
+		loadMoreProps,
 		setCacheValue,
 	});
 
@@ -250,15 +236,3 @@ export function useVirtualList<
 		msDataRef: msDataRef.current,
 	};
 }
-
-// const initValues = {
-//   visibleItems: {
-//     item: items[-1],
-//     itemIndex: -1,
-//     size: -1,
-//     offset: -1,
-//     listDirection,
-//   },
-// };
-
-// todo declared twice hooks
