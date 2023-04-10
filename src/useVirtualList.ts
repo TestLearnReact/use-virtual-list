@@ -114,7 +114,7 @@ export function useVirtualList<
 						useWindowScroll,
 					}))
 			) {
-				return;
+				//return;
 			}
 
 			const range = getExtendedVisibleItemRange(
@@ -195,10 +195,10 @@ export function useVirtualList<
 	useIsomorphicLayoutEffect(() => {
 		if (!items[0] || itemOffsets.length <= 0) return;
 
-		const resize = cache.prevValues.viewportWidth !== viewportWidth;
-
+		const resize = cache.prevViewportWidth !== viewportWidth;
+		//debugger;
 		if (
-			cache.prevValues.viewportWidth == 0 || // init
+			cache.prevViewportWidth == 0 || // init
 			!resize // prevent rerender/double calcs / comes from main/outside !?
 		) {
 			const initVisibleRange = visibleItemRange({
@@ -215,8 +215,8 @@ export function useVirtualList<
 			);
 		}
 
-		cache.prevValues.viewportWidth = viewportWidth;
-	}, [items, items.length, itemOffsets]);
+		cache.prevViewportWidth = viewportWidth;
+	}, [items, items.length, itemOffsets, xouterRef, xinnerRef]);
 
 	useIsomorphicLayoutEffect(() => {
 		if (xinnerRef) refInnerContainer.current = xinnerRef.current;

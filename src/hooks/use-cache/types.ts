@@ -1,5 +1,3 @@
-// import { LoadMoreEvent } from '../../../types';
-
 import { LoadMoreEvent } from '../../types'; // todo
 
 export type TSetCachValue = <
@@ -17,11 +15,9 @@ export type TCacheValues = {
 	visibleItemRange: number[];
 	loadMore: (event: LoadMoreEvent) => void;
 	isItemLoaded: (index: number) => boolean;
-	prevValues: {
-		viewportWidth?: number;
-		viewportHeight?: number;
-		prevVStop?: number;
-	};
+	prevViewportWidth?: number;
+	prevViewportHeight?: number;
+	prevVStop?: number;
 	scrollData: {
 		scrollOffsetX: number;
 		scrollOffsetY: number;
