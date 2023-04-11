@@ -179,7 +179,7 @@ export function useVirtualList<
 	);
 
 	/** Fetch more data */
-	useLoadMore({
+	const { isFetching } = useLoadMore({
 		cache,
 		msDataRef,
 		loadMoreProps,
@@ -193,10 +193,10 @@ export function useVirtualList<
 	 *
 	 * */
 	useIsomorphicLayoutEffect(() => {
-		if (!items[0] || itemOffsets.length <= 0) return;
+		if (!items[0] || itemOffsets.length <= 0 || isFetching) return;
 
 		const resize = cache.prevViewportWidth !== viewportWidth;
-		//debugger;
+
 		if (
 			cache.prevViewportWidth == 0 || // init
 			!resize // prevent rerender/double calcs / comes from main/outside !?
@@ -216,7 +216,7 @@ export function useVirtualList<
 		}
 
 		cache.prevViewportWidth = viewportWidth;
-	}, [items, items.length, itemOffsets, xouterRef, xinnerRef]);
+	}, [items, items.length, itemOffsets]); //xouterRef, xinnerRef itemOffsets
 
 	useIsomorphicLayoutEffect(() => {
 		if (xinnerRef) refInnerContainer.current = xinnerRef.current;
