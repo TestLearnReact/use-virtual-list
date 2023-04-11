@@ -62,21 +62,41 @@ export function useVirtualList<
 		refInnerContainer,
 	});
 
+	/** Fetch more data */
+	const { isFetching } = useLoadMore({
+		cache,
+		msDataRef,
+		loadMoreProps,
+		setCacheValue,
+	});
+
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			setCacheValue({
-				key: 'scrollData',
-				value: {
-					scrollOffsetX: currData.x,
-					scrollOffsetY: currData.y,
-					scrollSpeed:
-						Math.abs(currData.y - prevData.y) /
-						(Date.now() - prevData.timestamp),
-					scrollForward: currData.y > prevData.y,
-				},
-			});
+			listDirection === Direction.Vertical
+				? setCacheValue({
+						key: 'scrollData',
+						value: {
+							scrollOffsetX: currData.x,
+							scrollOffsetY: currData.y,
+							scrollSpeed:
+								Math.abs(currData.y - prevData.y) /
+								(Date.now() - prevData.timestamp),
+							scrollForward: currData.y > prevData.y,
+						},
+				  })
+				: setCacheValue({
+						key: 'scrollData',
+						value: {
+							scrollOffsetX: currData.x,
+							scrollOffsetY: currData.y,
+							scrollSpeed:
+								Math.abs(currData.x - prevData.x) /
+								(Date.now() - prevData.timestamp),
+							scrollForward: currData.x > prevData.x,
+						},
+				  });
 
-			console.log('scroll: ', currData.y);
+			console.log('scroll: ', currData.y, currData.x, isFetching);
 
 			// visible rows [0, 1, ...,7]
 			visibleItemRange({
@@ -112,30 +132,35 @@ export function useVirtualList<
 						refOuterContainer,
 						totalSize: innerContainerStyle.totalSize, // todo refInner ?
 						useWindowScroll,
+						listDirection,
 					}))
 			) {
-				//return;
+				return [];
 			}
 
 			const range = getExtendedVisibleItemRange(
 				listSize,
 				itemSize,
 				items.length,
-				cache.scrollData.scrollOffsetY,
+				listDirection === Direction.Vertical
+					? cache.scrollData.scrollOffsetY
+					: cache.scrollData.scrollOffsetX,
 				itemOffsets,
 				overscan,
 				cache.scrollData.scrollForward
 			);
 
+			// loadMore bug?-> containerStyles totalsize or msDataRef[last]?
 			if (isScrolling && isSameRange(cache.visibleItemRange, range)) {
-				return;
-				// return range;
+				return range;
 			}
+			// if (isSameRange(cache.visibleItemRange, range)) {
+			// 	return range;
+			// }
 
 			setCacheValue({ key: 'visibleItemRange', value: range });
 
-			// console.log('-- RANGE:: ', range);
-			//debugger;
+			console.log('-- RANGE:: ', range, cache._loadMore);
 
 			const visibleItems = range.map(
 				(itemIndex): VisibleItemDescriptor<ItemType> => {
@@ -160,31 +185,24 @@ export function useVirtualList<
 
 			return range;
 		},
-		// todo window innerContainerStyle.totalSize ?
-		// outer inner ref developer/parameter part ?
-
 		[
-			listSize,
-			items.length,
-			items,
-			itemOffsets,
+			cache,
 			innerContainerStyle.totalSize,
-			itemsSnapshotSignature,
-		] // visibleItems ,
+			itemSize,
+			items,
+			listDirection,
+			listSize,
+			msDataRef,
+			overscan,
+			setCacheValue,
+			useWindowScroll,
+		]
 	);
 
 	const getMeasuredItem = useCallback(
 		(itemIndex: number) => msDataRef.current[itemIndex],
 		[msDataRef] //  itemOffsets msDataRef.current itemsSnapshotSignature !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	);
-
-	/** Fetch more data */
-	const { isFetching } = useLoadMore({
-		cache,
-		msDataRef,
-		loadMoreProps,
-		setCacheValue,
-	});
 
 	/**
 	 *
@@ -193,7 +211,9 @@ export function useVirtualList<
 	 *
 	 * */
 	useIsomorphicLayoutEffect(() => {
-		if (!items[0] || itemOffsets.length <= 0 || isFetching) return;
+		if (!items[0] || itemOffsets.length <= 0) return;
+
+		if (cache._loadMore) return;
 
 		const resize = cache.prevViewportWidth !== viewportWidth;
 
@@ -210,7 +230,8 @@ export function useVirtualList<
 				itemOffsets,
 				initVisibleRange,
 				'msDataRef ',
-				msDataRef
+				msDataRef,
+				cache._loadMore
 				//cache,
 			);
 		}
