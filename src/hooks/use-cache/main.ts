@@ -15,6 +15,7 @@ export const useCache = ({ deps }: { deps?: DependencyList }) => {
 			scrollSpeed: 0,
 			scrollForward: true,
 		},
+		_loadMore: false,
 	});
 
 	const setCacheValue: TSetCachValue = useCallback(({ key, value }) => {

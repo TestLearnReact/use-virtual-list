@@ -24,4 +24,5 @@ export type TCacheValues = {
 		scrollSpeed: number;
 		scrollForward: boolean;
 	};
+	_loadMore: boolean;
 };
