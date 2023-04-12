@@ -1,17 +1,8 @@
 import { useMemo } from 'react';
-import { TCacheValues } from '../use-cache/types';
-import { Measure } from '../../types';
 import { getFirstArrItem, getLastArrItem } from '../../utils';
+import { IProps, IReturnContainerStyles } from './types';
 
 // todo no sense refInner/Outer? maybe for neednewcalc() x/y scroll
-
-interface IProps<O, I> {
-	msDataRef: React.MutableRefObject<Measure[]>;
-	cache: TCacheValues;
-	itemsLength: number;
-	refOuterContainer: React.RefObject<O>; //React.MutableRefObject<O | undefined>;
-	refInnerContainer: React.RefObject<I>; //React.MutableRefObject<I | undefined>;
-}
 
 export const useContainerStyle = <
 	O extends HTMLElement = HTMLElement,
@@ -22,18 +13,8 @@ export const useContainerStyle = <
 	itemsLength,
 	refOuterContainer,
 	refInnerContainer,
-}: IProps<O, I>) => {
-	const containerStyles = useMemo<{
-		innerMargin: number;
-		innerSize: number;
-		totalSize: number;
-		top: number;
-		left: number;
-		height: number;
-		width: number;
-		heightInner: number;
-		widthInner: number;
-	}>(() => {
+}: IProps<O, I>): IReturnContainerStyles => {
+	const containerStyles = useMemo(() => {
 		let innerMargin = 0;
 		let totalSize = 0;
 		let innerSize = 0;
@@ -68,15 +49,19 @@ export const useContainerStyle = <
 		innerSize = totalSize - innerMargin;
 
 		return {
-			innerMargin,
-			innerSize,
-			totalSize,
-			top,
-			left,
-			height,
-			width,
-			heightInner,
-			widthInner,
+			outerContainerStyle: {
+				height,
+				width,
+				top,
+				left,
+			},
+			innerContainerStyle: {
+				innerMargin,
+				totalSize,
+				innerSize,
+				heightInner,
+				widthInner,
+			},
 		};
 	}, [
 		cache.visibleItemRange,
@@ -86,21 +71,22 @@ export const useContainerStyle = <
 		refOuterContainer,
 	]);
 
-	return {
-		outerContainerStyle: {
-			height: containerStyles.height,
-			width: containerStyles.width,
-			top: containerStyles.top,
-			left: containerStyles.left,
-		},
-		innerContainerStyle: {
-			innerMargin: containerStyles.innerMargin,
-			totalSize: containerStyles.totalSize,
-			innerSize: containerStyles.innerSize,
-			heightInner: containerStyles.heightInner,
-			widthInner: containerStyles.widthInner,
-		},
-	};
+	return { containerStyles: containerStyles, measured: 0 };
+	// return {
+	// 	outerContainerStyle: {
+	// 		height: containerStyles.height,
+	// 		width: containerStyles.width,
+	// 		top: containerStyles.top,
+	// 		left: containerStyles.left,
+	// 	},
+	// 	innerContainerStyle: {
+	// 		innerMargin: containerStyles.innerMargin,
+	// 		totalSize: containerStyles.totalSize,
+	// 		innerSize: containerStyles.innerSize,
+	// 		heightInner: containerStyles.heightInner,
+	// 		widthInner: containerStyles.widthInner,
+	// 	},
+	// };
 };
 // const outerContainerStyle = useMemo<{
 //   height: number;

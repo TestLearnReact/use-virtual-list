@@ -54,7 +54,7 @@ export function useVirtualList<
 			itemSize,
 		});
 
-	const { outerContainerStyle, innerContainerStyle } = useContainerStyle({
+	const { containerStyles } = useContainerStyle({
 		msDataRef,
 		cache,
 		itemsLength: items.length,
@@ -125,14 +125,12 @@ export function useVirtualList<
 				!items[0] ||
 				(cache.visibleItemRange[0] !== -1 &&
 					isScrolling &&
-					!needNewCalcVisbleRange<O, I>({
+					!needNewCalcVisbleRange({
 						msDataRef,
 						cache,
-						///refInnerContainer,
-						refOuterContainer,
-						totalSize: innerContainerStyle.totalSize, // todo refInner ?
 						useWindowScroll,
 						listDirection,
+						containerStyles,
 					}))
 			) {
 				return [];
@@ -160,7 +158,12 @@ export function useVirtualList<
 
 			setCacheValue({ key: 'visibleItemRange', value: range });
 
-			console.log('-- RANGE:: ', range, cache._loadMore);
+			console.log(
+				'-- RANGE:: ',
+				range,
+				cache._loadMore,
+				cache.scrollData.scrollForward
+			);
 
 			const visibleItems = range.map(
 				(itemIndex): VisibleItemDescriptor<ItemType> => {
@@ -187,7 +190,7 @@ export function useVirtualList<
 		},
 		[
 			cache,
-			innerContainerStyle.totalSize,
+			///innerContainerStyle.totalSize,
 			itemSize,
 			items,
 			listDirection,
@@ -196,6 +199,7 @@ export function useVirtualList<
 			overscan,
 			setCacheValue,
 			useWindowScroll,
+			containerStyles,
 		]
 	);
 
@@ -248,10 +252,11 @@ export function useVirtualList<
 		refOuter: refOuterContainer,
 		refInner: refInnerContainer,
 		visibleItems: hookReturnState.visibleItems, // visibleItems,
-		containerStyles: {
-			outer: { ...outerContainerStyle },
-			inner: { ...innerContainerStyle },
-		},
+		containerStyles: containerStyles,
+		// containerStyles: {
+		// 	outer: { ...outerContainerStyle },
+		// 	inner: { ...innerContainerStyle },
+		// },
 		getMeasuredItem,
 		scrollingSpeed: cache.scrollData.scrollSpeed,
 		msDataRef: msDataRef.current,
