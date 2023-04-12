@@ -1,4 +1,5 @@
 import { CSSProperties, RefCallback, RefObject } from 'react';
+import { IContainerStyle, IReturnContainerStyles } from './hooks';
 
 export interface IHookReturn<
 	ItemType,
@@ -11,10 +12,11 @@ export interface IHookReturn<
 	refOuter: RefObject<O> | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<O>; | O
 	refInner: RefObject<I> | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<I>; | I
 	visibleItems: VisibleItemDescriptor<ItemType>[];
-	containerStyles: {
-		outer: { height: number; width: number };
-		inner: { innerMargin: number; innerSize: number; totalSize: number };
-	};
+	containerStyles: IReturnContainerStyles['containerStyles'];
+	// containerStyles: {
+	// 	outer: { height: number; width: number };
+	// 	inner: { innerMargin: number; innerSize: number; totalSize: number };
+	// };
 	msDataRef: Measure[];
 }
 
@@ -78,5 +80,6 @@ export interface IVirtualListProps<
 	listDirection?: Direction;
 	overscan?: number;
 	useWindowScroll?: boolean;
-	loadMoreProps: LoadMoreType;
+	loadMoreProps?: LoadMoreType;
+	wait?: number;
 }

@@ -36,6 +36,7 @@ export function useVirtualList<
 	overscan = 10,
 	loadMoreProps,
 	useWindowScroll = false,
+	wait,
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	const refOuterContainer = useRef<O | null>(null);
 	const refInnerContainer = useRef<I | null>(null);
@@ -72,29 +73,19 @@ export function useVirtualList<
 
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			listDirection === Direction.Vertical
-				? setCacheValue({
-						key: 'scrollData',
-						value: {
-							scrollOffsetX: currData.x,
-							scrollOffsetY: currData.y,
-							scrollSpeed:
-								Math.abs(currData.y - prevData.y) /
-								(Date.now() - prevData.timestamp),
-							scrollForward: currData.y > prevData.y,
-						},
-				  })
-				: setCacheValue({
-						key: 'scrollData',
-						value: {
-							scrollOffsetX: currData.x,
-							scrollOffsetY: currData.y,
-							scrollSpeed:
-								Math.abs(currData.x - prevData.x) /
-								(Date.now() - prevData.timestamp),
-							scrollForward: currData.x > prevData.x,
-						},
-				  });
+			const xY = listDirection === Direction.Vertical ? 'y' : 'x';
+
+			setCacheValue({
+				key: 'scrollData',
+				value: {
+					scrollOffsetX: currData.x,
+					scrollOffsetY: currData.y,
+					scrollSpeed:
+						Math.abs(currData[xY] - prevData[xY]) /
+						(Date.now() - prevData.timestamp),
+					scrollForward: currData[xY] > prevData[xY],
+				},
+			});
 
 			console.log('scroll: ', currData.y, currData.x, isFetching);
 
@@ -108,8 +99,7 @@ export function useVirtualList<
 		scrollWindowOrElement: useWindowScroll
 			? { useWindowScroll: true }
 			: { element: refOuterContainer },
-		// deps: [listDirection],
-		// wait: 10,
+		wait,
 	});
 
 	const visibleItemRange = useCallback(
@@ -190,7 +180,6 @@ export function useVirtualList<
 		},
 		[
 			cache,
-			///innerContainerStyle.totalSize,
 			itemSize,
 			items,
 			listDirection,
@@ -253,12 +242,10 @@ export function useVirtualList<
 		refInner: refInnerContainer,
 		visibleItems: hookReturnState.visibleItems, // visibleItems,
 		containerStyles: containerStyles,
-		// containerStyles: {
-		// 	outer: { ...outerContainerStyle },
-		// 	inner: { ...innerContainerStyle },
-		// },
 		getMeasuredItem,
 		scrollingSpeed: cache.scrollData.scrollSpeed,
 		msDataRef: msDataRef.current,
 	};
 }
+
+// todo put if statements like itemSize function/number, scroll const xY = listDirection === Direction.Vertical ? 'y' : 'x'; in useRef()
