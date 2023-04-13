@@ -1,17 +1,21 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { ISubProps } from '../../types';
 import { useVirtualList } from '../../../src';
-import { IDataItem, data } from '../../data';
+import { IDataItem } from '../../data';
 
-type TItem = { id: number; height: number };
+/**
+ *
+ * Bugs:
+ * listsize % itemsize > 0 visible range
+ *
+ * Todos:
+ * use containerstyles in other hooks
+ */
 
-export const HorizontalList: React.FC<ISubProps<TItem>> = ({
+export const HorizontalList: React.FC<ISubProps<IDataItem>> = ({
 	listHeight,
 	listWidth,
-	//refOuterWrapper,
-	//refInnerWrapper,
-	//containerStyles,
-	//visibleItems,
+	data,
 }) => {
 	const {
 		visibleItems,
@@ -22,7 +26,7 @@ export const HorizontalList: React.FC<ISubProps<TItem>> = ({
 	} = useVirtualList<IDataItem, HTMLDivElement, HTMLDivElement>({
 		viewportHeight: 100,
 		viewportWidth: 100,
-		itemSize: 300,
+		itemSize: 280,
 		listSize: listWidth,
 		listDirection: 1,
 		overscan: 1,
@@ -30,19 +34,14 @@ export const HorizontalList: React.FC<ISubProps<TItem>> = ({
 		items: data,
 	});
 
-	const refNode = useCallback((node: HTMLDivElement) => {
-		console.log('refNode', node);
-	}, []);
-
-	console.log('rerender', visibleItems, msDataRef);
-
 	return (
-		<div ref={refNode}>
+		<div>
 			<div
 				ref={refOuterWrapper}
 				style={{
 					position: 'fixed',
-					top: 60,
+					top: 380,
+					left: 60,
 					height: listHeight,
 					width: listWidth,
 					overflow: 'auto',
@@ -57,7 +56,7 @@ export const HorizontalList: React.FC<ISubProps<TItem>> = ({
 						position: 'relative',
 						height: '100%',
 						minWidth: '100%',
-						width: Math.max(containerStyles.inner.totalSize, 601),
+						width: Math.max(containerStyles.innerContainerStyle.totalSize, 601),
 					}}
 				>
 					{visibleItems.map((item) => (
@@ -65,7 +64,7 @@ export const HorizontalList: React.FC<ISubProps<TItem>> = ({
 							key={item.item.id}
 							style={{
 								position: 'absolute',
-								top: 0, //item.offset,
+								top: 0,
 								left: item.offset,
 								width: item.size,
 							}}

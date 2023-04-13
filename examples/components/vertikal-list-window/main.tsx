@@ -40,7 +40,7 @@ import { IDataItem } from '../../data';
 // 	}
 // };
 
-export const VerticalList: React.FC<ISubProps<IDataItem>> = ({
+export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 	listHeight,
 	listWidth,
 	data,
@@ -55,94 +55,61 @@ export const VerticalList: React.FC<ISubProps<IDataItem>> = ({
 		viewportHeight: 100,
 		viewportWidth: 100,
 		itemSize: 280,
-		listSize: listWidth,
+		listSize: 843, //listWidth,
 		listDirection: 0,
 		overscan: 1,
-		useWindowScroll: false,
+		useWindowScroll: true,
 		items: data,
 	});
 
+	console.log('rerender: ', containerStyles, visibleItems);
+
 	return (
-		<div>
+		<div
+			style={{
+				height: Math.max(containerStyles.innerContainerStyle.totalSize, 601),
+			}}
+		>
+			<div
+				ref={refInnerWrapper}
+				className="_inner"
+				style={{
+					position: 'relative',
+					top: 60,
+					left: 60,
+					width: '100%',
+					minHeight: '100%',
+					height: Math.max(containerStyles.innerContainerStyle.totalSize, 601),
+				}}
+			>
+				{visibleItems.map((item) => (
+					<div
+						key={item.item.id}
+						style={{
+							position: 'absolute',
+							top: item.offset,
+							left: 0,
+							height: item.size,
+						}}
+					>
+						{item.item.id}
+					</div>
+				))}
+			</div>
 			<div
 				ref={refOuterWrapper}
+				className="_outer"
 				style={{
 					position: 'fixed',
 					top: 60,
 					left: 60,
-					height: listHeight,
-					width: listWidth,
-					overflow: 'auto',
-					willChange: 'transform',
-					WebkitOverflowScrolling: 'touch',
+					height: '90%',
+					width: '100%',
 					backgroundColor: 'beige',
+					scrollbarWidth: 'none',
+					visibility: 'collapse',
 				}}
-			>
-				<div
-					ref={refInnerWrapper}
-					style={{
-						position: 'relative',
-						width: '100%',
-						minHeight: '100%',
-						height: Math.max(
-							containerStyles.innerContainerStyle.totalSize,
-							601
-						),
-					}}
-				>
-					{visibleItems.map((item) => (
-						<div
-							key={item.item.id}
-							style={{
-								position: 'absolute',
-								top: item.offset,
-								left: 0,
-								height: item.size,
-							}}
-						>
-							{item.item.id}
-						</div>
-					))}
-				</div>
-			</div>
-
-			{/* <div
-				ref={refOuterWrapper}
-				style={{
-					position: 'fixed',
-					top: 60,
-					height: vpHeight,
-					width: vpWidth,
-					overflow: 'auto',
-					willChange: 'transform',
-					WebkitOverflowScrolling: 'touch',
-					backgroundColor: 'beige',
-				}}
-			>
-				<div
-					ref={refInnerWrapper}
-					style={{
-						position: 'relative',
-						width: '100%',
-						minHeight: '100%',
-						height: Math.max(containerStyles.inner.totalSize, 601),
-					}}
-				>
-					{visibleItems.map((item) => (
-						<div
-							key={item.item.id}
-							style={{
-								position: 'absolute',
-								top: item.offset,
-								left: 0,
-								height: item.size,
-							}}
-						>
-							{item.item.id}
-						</div>
-					))}
-				</div>
-			</div> */}
+			></div>
 		</div>
 	);
 };
