@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getFirstArrItem, getLastArrItem } from '../../utils';
 import { IProps, IReturnContainerStyles } from './types';
 
 // todo no sense refInner/Outer? maybe for neednewcalc() x/y scroll
+
+const init = { height: 0, width: 0, top: 0, left: 0 };
 
 export const useContainerStyle = <
 	O extends HTMLElement = HTMLElement,
@@ -14,6 +16,112 @@ export const useContainerStyle = <
 	refOuterContainer,
 	refInnerContainer,
 }: IProps<O, I>): IReturnContainerStyles => {
+	const {
+		height: oHeight,
+		width: oWidth,
+		top: oTop,
+		left: oLeft,
+	} = refOuterContainer.current?.getBoundingClientRect() || init;
+	const { height: iHeight, width: iWidth } =
+		refInnerContainer.current?.getBoundingClientRect() || init;
+
+	// function impressionTracker({
+	// 	msDataRef,
+	// 	cache,
+	// 	itemsLength,
+	// 	refOuterContainer,
+	// 	refInnerContainer,
+	// }: IProps<O, I>) {
+	// 	let innerMargin = 0;
+	// 	let totalSize = 0;
+	// 	let innerSize = 0;
+	// 	let top = 0;
+	// 	let left = 0;
+	// 	const height = refOuterContainer.current?.offsetHeight || 0;
+	// 	const width = refOuterContainer.current?.offsetWidth || 0;
+	// 	const heightInner = refInnerContainer.current?.offsetHeight || 0;
+	// 	const widthInner = refInnerContainer.current?.offsetWidth || 0;
+
+	// 	if (refOuterContainer && refOuterContainer.current) {
+	// 		const { top: t, left: l } =
+	// 			refOuterContainer.current.getBoundingClientRect();
+	// 		top = t;
+	// 		left = l;
+	// 	}
+
+	// 	const lastVisibleItemOffsets =
+	// 		msDataRef.current[getLastArrItem(cache.visibleItemRange)];
+
+	// 	if (lastVisibleItemOffsets) {
+	// 		innerMargin =
+	// 			msDataRef.current[getFirstArrItem(cache.visibleItemRange)]?.start || 0;
+
+	// 		totalSize = Math[
+	// 			getLastArrItem(cache.visibleItemRange) < itemsLength ? 'max' : 'min'
+	// 		](
+	// 			lastVisibleItemOffsets.end, //+ lastVisibleItemOffsets.size, // todo
+	// 			getLastArrItem(msDataRef.current).end
+	// 		);
+	// 	}
+	// 	innerSize = totalSize - innerMargin;
+
+	// 	return {
+	// 		outerContainerStyle: {
+	// 			height,
+	// 			width,
+	// 			top,
+	// 			left,
+	// 		},
+	// 		innerContainerStyle: {
+	// 			innerMargin,
+	// 			totalSize,
+	// 			innerSize,
+	// 			heightInner,
+	// 			widthInner,
+	// 		},
+	// 	};
+
+	// 	// console.log(
+	// 	// 	'params',
+	// 	// 	refOuterContainer.current?.offsetHeight,
+	// 	// 	refInnerContainer.current?.offsetHeight
+	// 	// );
+	// 	// return;
+	// }
+
+	// const initialTrackingValues = useRef({
+	// 	tracker: impressionTracker,
+	// 	params: {
+	// 		msDataRef,
+	// 		cache,
+	// 		itemsLength,
+	// 		refOuterContainer,
+	// 		refInnerContainer,
+	// 	},
+	// });
+	// const [containerStyles, setContainerStyles] = useState({
+	// 	outerContainerStyle: {
+	// 		height: 0,
+	// 		width: 0,
+	// 		top: 0,
+	// 		left: 0,
+	// 	},
+	// 	innerContainerStyle: {
+	// 		innerMargin: 0,
+	// 		totalSize: 0,
+	// 		innerSize: 0,
+	// 		heightInner: 0,
+	// 		widthInner: 0,
+	// 	},
+	// });
+
+	// // track impression
+	// useEffect(() => {
+	// 	const { tracker, params } = initialTrackingValues.current;
+	// 	const test = tracker(params);
+	// 	setContainerStyles(test);
+	// }, [h]); // you get NO eslint warnings for tracker or params
+
 	const containerStyles = useMemo(() => {
 		let innerMargin = 0;
 		let totalSize = 0;
@@ -50,7 +158,7 @@ export const useContainerStyle = <
 
 		return {
 			outerContainerStyle: {
-				height,
+				height: oHeight,
 				width,
 				top,
 				left,
@@ -69,6 +177,8 @@ export const useContainerStyle = <
 		msDataRef,
 		refInnerContainer,
 		refOuterContainer,
+		//refOuterContainer.current?.offsetHeight,
+		oHeight,
 	]);
 
 	return { containerStyles: containerStyles, measured: 0 };
