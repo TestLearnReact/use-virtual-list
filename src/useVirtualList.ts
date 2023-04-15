@@ -36,7 +36,7 @@ export function useVirtualList<
 	overscan = 10,
 	loadMoreProps,
 	useWindowScroll = false,
-	wait,
+	waitScroll,
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	const refOuterContainer = useRef<O | null>(null);
 	const refInnerContainer = useRef<I | null>(null);
@@ -99,7 +99,7 @@ export function useVirtualList<
 		scrollWindowOrElement: useWindowScroll
 			? { useWindowScroll: true }
 			: { element: refOuterContainer },
-		wait,
+		wait: waitScroll,
 	});
 
 	const visibleItemRange = useCallback(
@@ -127,7 +127,10 @@ export function useVirtualList<
 			}
 
 			const range = getExtendedVisibleItemRange(
-				listSize,
+				//listSize,
+				containerStyles.outerContainerStyle[
+					listDirection === Direction.Vertical ? 'height' : 'width'
+				],
 				itemSize,
 				items.length,
 				listDirection === Direction.Vertical
@@ -148,12 +151,7 @@ export function useVirtualList<
 
 			setCacheValue({ key: 'visibleItemRange', value: range });
 
-			console.log(
-				'-- RANGE:: ',
-				range,
-				cache._loadMore,
-				cache.scrollData.scrollForward
-			);
+			console.log('-- RANGE:: ', range);
 
 			const visibleItems = range.map(
 				(itemIndex): VisibleItemDescriptor<ItemType> => {
@@ -183,12 +181,13 @@ export function useVirtualList<
 			itemSize,
 			items,
 			listDirection,
-			listSize,
+			//listSize,
 			msDataRef,
 			overscan,
 			setCacheValue,
 			useWindowScroll,
 			containerStyles,
+			//hh,
 		]
 	);
 
@@ -249,3 +248,6 @@ export function useVirtualList<
 }
 
 // todo put if statements like itemSize function/number, scroll const xY = listDirection === Direction.Vertical ? 'y' : 'x'; in useRef()
+// listSize -> containerStyles ssr/fallback prop?
+
+// https://blog.logrocket.com/when-not-to-use-usememo-react-hook/
