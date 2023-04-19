@@ -22,9 +22,10 @@ export const useContainerStyle = <
 	itemsLength,
 	refOuterContainer,
 	refInnerContainer,
+	_sizeKey,
 }: IProps<O, I>): IReturnContainerStyles => {
+	const refResize = useRef(false);
 	const refOuterState = useRef(initDomRect);
-
 	const refhookReturn = useRef({
 		outerContainerStyle: refOuterState.current,
 		innerContainerStyle: {
@@ -38,8 +39,24 @@ export const useContainerStyle = <
 
 	useEffect(() => {
 		if (!refOuterContainer.current) return;
-		refOuterState.current = refOuterContainer.current?.getBoundingClientRect();
-	}, [refOuterContainer]);
+		const rect = refOuterContainer.current.getBoundingClientRect();
+
+		refResize.current = false;
+		if (
+			rect[_sizeKey] !== refOuterState.current[_sizeKey] &&
+			cache.visibleItemRange[0] !== -1
+		) {
+			refResize.current = true;
+		}
+
+		refOuterState.current = rect;
+	}, [
+		refOuterContainer,
+		refOuterContainer.current?.offsetWidth,
+		refOuterContainer.current?.offsetHeight,
+		_sizeKey,
+		cache.visibleItemRange,
+	]);
 
 	useEffect(() => {
 		let innerMargin = 0;
@@ -82,5 +99,6 @@ export const useContainerStyle = <
 	return {
 		containerStyles: refhookReturn.current,
 		measured: 0,
+		_resize: refResize.current,
 	};
 };

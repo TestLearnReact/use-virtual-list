@@ -23,6 +23,7 @@ export type IContainerStyle = {
 export type IReturnContainerStyles = {
 	containerStyles: IContainerStyle;
 	measured: number;
+	_resize: boolean;
 };
 
 export interface IProps<O, I> {
@@ -31,4 +32,5 @@ export interface IProps<O, I> {
 	itemsLength: number;
 	refOuterContainer: React.RefObject<O>;
 	refInnerContainer: React.RefObject<I>;
+	_sizeKey: 'height' | 'width';
 }

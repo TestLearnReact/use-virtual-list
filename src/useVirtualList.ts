@@ -25,13 +25,13 @@ export function useVirtualList<
 	O extends HTMLElement = HTMLElement,
 	I extends HTMLElement = O
 >({
-	viewportHeight,
-	viewportWidth,
+	// viewportHeight,
+	// viewportWidth,
 	xouterRef,
 	xinnerRef,
 	items,
 	itemSize,
-	listSize = 0,
+	// listSize = 0,
 	listDirection = Direction.Vertical,
 	overscan = 10,
 	loadMoreProps,
@@ -40,6 +40,11 @@ export function useVirtualList<
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	const refOuterContainer = useRef<O | null>(null);
 	const refInnerContainer = useRef<I | null>(null);
+
+	const { current: refItemSize } = useRef(itemSize);
+
+	const _sizeKey = listDirection == Direction.Vertical ? 'height' : 'width';
+	const _scrollKey = listDirection == Direction.Vertical ? 'y' : 'x';
 
 	const [hookReturnState, setHookReturnState] = useState<{
 		visibleItems: VisibleItemDescriptor<ItemType>[];
@@ -52,15 +57,17 @@ export function useVirtualList<
 	const { itemOffsets, itemsSnapshotSignature, msDataRef } =
 		useItemOffsets<ItemType>({
 			items,
-			itemSize,
+			itemSize: refItemSize,
+			//itemSize,
 		});
 
-	const { containerStyles } = useContainerStyle({
+	const { containerStyles, _resize } = useContainerStyle({
 		msDataRef,
 		cache,
 		itemsLength: items.length,
 		refOuterContainer,
 		refInnerContainer,
+		_sizeKey,
 	});
 
 	/** Fetch more data */
@@ -73,7 +80,7 @@ export function useVirtualList<
 
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			const xY = listDirection === Direction.Vertical ? 'y' : 'x';
+			// const xY = listDirection === Direction.Vertical ? 'y' : 'x';
 
 			setCacheValue({
 				key: 'scrollData',
@@ -81,13 +88,13 @@ export function useVirtualList<
 					scrollOffsetX: currData.x,
 					scrollOffsetY: currData.y,
 					scrollSpeed:
-						Math.abs(currData[xY] - prevData[xY]) /
+						Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
 						(Date.now() - prevData.timestamp),
-					scrollForward: currData[xY] > prevData[xY],
+					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
 				},
 			});
 
-			console.log('scroll: ', currData.y, currData.x, isFetching);
+			// console.log('scroll: ', currData.y, currData.x, isFetching);
 
 			// visible rows [0, 1, ...,7]
 			visibleItemRange({
@@ -128,9 +135,7 @@ export function useVirtualList<
 
 			const range = getExtendedVisibleItemRange(
 				//listSize,
-				containerStyles.outerContainerStyle[
-					listDirection === Direction.Vertical ? 'height' : 'width'
-				],
+				containerStyles.outerContainerStyle[_sizeKey],
 				itemSize,
 				items.length,
 				listDirection === Direction.Vertical
@@ -187,7 +192,7 @@ export function useVirtualList<
 			setCacheValue,
 			useWindowScroll,
 			containerStyles,
-			//hh,
+			_sizeKey,
 		]
 	);
 
@@ -207,33 +212,26 @@ export function useVirtualList<
 
 		if (cache._loadMore) return;
 
-		const resize = cache.prevViewportWidth !== viewportWidth;
+		// init ok, resize comes from outside -> prevent recalcs/rerender
+		if (_resize) return;
 
-		if (
-			cache.prevViewportWidth == 0 || // init
-			!resize // prevent rerender/double calcs / comes from main/outside !?
-		) {
-			const initVisibleRange = visibleItemRange({
-				itemOffsets: itemOffsets,
-				isScrolling: false,
-			});
-			console.log(
-				':: INIT :: ',
-				itemOffsets,
-				initVisibleRange,
-				'msDataRef ',
-				msDataRef,
-				cache._loadMore
-				//cache,
-			);
-		}
-
-		cache.prevViewportWidth = viewportWidth;
-	}, [items, items.length, itemOffsets]); //xouterRef, xinnerRef itemOffsets
+		const initVisibleRange = visibleItemRange({
+			itemOffsets: itemOffsets,
+			isScrolling: false,
+		});
+		console.log(
+			':: INIT :: ',
+			itemOffsets,
+			initVisibleRange,
+			'msDataRef ',
+			msDataRef
+		);
+	}, [items, items.length, itemOffsets, _resize]); //xouterRef, xinnerRef itemOffsets _resize
 
 	useIsomorphicLayoutEffect(() => {
 		if (xinnerRef) refInnerContainer.current = xinnerRef.current;
 		if (xouterRef) refOuterContainer.current = xouterRef.current;
+		//refIsMounted.current = true;
 	}, [xouterRef, xinnerRef]);
 
 	return {
