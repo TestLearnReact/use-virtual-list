@@ -15,13 +15,12 @@ export function useItemOffsets<ItemType>({
 	const [itemsSnapshotSignature, setItemsSnapshotSignature] = useState(
 		Math.random().toString(32)
 	);
+
 	// memory storage measured values
 	const msDataRef = useRef<Measure[]>([{ idx: 0, start: 0, end: 0, size: 0 }]); //
 
 	useEffect(() => {
-		// debugger;
-		// todo ssr
-		setItemsSnapshotSignature(Math.random().toString(32));
+		///setItemsSnapshotSignature(Math.random().toString(32));
 
 		let nextItemOffsets: number[] = [];
 		let itemOffsetsDidChange =
@@ -72,9 +71,10 @@ export function useItemOffsets<ItemType>({
 
 			if (itemOffsetsDidChange) {
 				setItemOffsets(nextItemOffsets);
+				setItemsSnapshotSignature(Math.random().toString(32));
 			}
 		}
-	}, [items, items.length]);
+	}, [items, items.length, itemSize, itemOffsets]);
 
 	return {
 		itemOffsets,
