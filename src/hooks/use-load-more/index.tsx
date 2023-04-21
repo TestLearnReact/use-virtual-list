@@ -5,27 +5,16 @@ import { Measure, LoadMoreType } from '../../types';
 import { getLastArrItem } from '../../utils';
 
 export const useLoadMore = ({
-	msDataRef,
 	cache,
 	loadMoreProps,
 	setCacheValue,
 }: {
-	msDataRef: React.MutableRefObject<Measure[]>;
 	cache: TCacheValues;
 	setCacheValue: TSetCachValue;
 	loadMoreProps?: LoadMoreType;
 }) => {
-	const [isFetching, setIsFetching] = useState(false);
-
 	useEffect(() => {
-		if (
-			msDataRef.current.length <= 0 ||
-			cache.visibleItemRange.length <= 0 ||
-			!loadMoreProps
-		)
-			return;
-
-		setIsFetching(false);
+		if (cache.visibleItemRange.length <= 0 || !loadMoreProps) return;
 
 		const { loadMore, loadMoreCount, isItemLoaded } = loadMoreProps;
 
@@ -38,12 +27,17 @@ export const useLoadMore = ({
 		const startIndex = loadIndex * loadMoreCount;
 		const stopIndex = startIndex + loadMoreCount - 1;
 
-		if (
-			loadMore && //todo loadIndex > 0 &&
-			isItemLoaded &&
-			!isItemLoaded(loadIndex) &&
-			cache.prevVStop !== stopIndex
-		) {
+		setCacheValue({
+			key: '_loadMore',
+			value: false,
+		});
+
+		if (loadMore && !isItemLoaded(loadIndex) && cache.prevVStop !== stopIndex) {
+			setCacheValue({
+				key: '_loadMore',
+				value: true,
+			});
+
 			loadMore({
 				startIndex,
 				stopIndex,
@@ -52,16 +46,12 @@ export const useLoadMore = ({
 				userScroll: true,
 			});
 
-			//			cache.prevValues.prevVStop = stopIndex;
 			setCacheValue({
 				key: 'prevVStop',
 				value: stopIndex,
 			});
-
-			setIsFetching(true);
 		}
 	}, [
-		msDataRef,
 		loadMoreProps,
 		setCacheValue,
 		cache.visibleItemRange,
@@ -69,5 +59,5 @@ export const useLoadMore = ({
 		cache.prevVStop,
 	]);
 
-	return { isFetching };
+	return { isFetching: cache._loadMore };
 };
