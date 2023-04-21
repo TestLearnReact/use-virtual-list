@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { TSetCachValue } from '../use-cache';
 import { TCacheValues } from '../use-cache/types';
 import { Measure, LoadMoreType } from '../../types';

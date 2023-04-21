@@ -42,6 +42,7 @@ export function useVirtualList<
 	const refInnerContainer = useRef<I | null>(null);
 
 	const { current: refItemSize } = useRef(itemSize);
+	const isMounted = useRef(false);
 
 	const _sizeKey = listDirection == Direction.Vertical ? 'height' : 'width';
 	const _scrollKey = listDirection == Direction.Vertical ? 'y' : 'x';
@@ -54,11 +55,17 @@ export function useVirtualList<
 
 	const { cache, setCacheValue } = useCache({});
 
+	/** Fetch more data */
+	const { isFetching } = useLoadMore({
+		cache,
+		loadMoreProps,
+		setCacheValue,
+	});
+
 	const { itemOffsets, itemsSnapshotSignature, msDataRef } =
 		useItemOffsets<ItemType>({
 			items,
 			itemSize: refItemSize,
-			//itemSize,
 		});
 
 	const { containerStyles, _resize } = useContainerStyle({
@@ -70,18 +77,16 @@ export function useVirtualList<
 		_sizeKey,
 	});
 
-	/** Fetch more data */
-	const { isFetching } = useLoadMore({
-		cache,
-		msDataRef,
-		loadMoreProps,
-		setCacheValue,
-	});
+	// /** Fetch more data */
+	// const { isFetching } = useLoadMore({
+	// 	cache,
+	// 	msDataRef,
+	// 	loadMoreProps,
+	// 	setCacheValue,
+	// });
 
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			// const xY = listDirection === Direction.Vertical ? 'y' : 'x';
-
 			setCacheValue({
 				key: 'scrollData',
 				value: {
@@ -132,19 +137,21 @@ export function useVirtualList<
 			) {
 				return [];
 			}
-
 			const range = getExtendedVisibleItemRange(
-				//listSize,
 				containerStyles.outerContainerStyle[_sizeKey],
 				itemSize,
 				items.length,
-				listDirection === Direction.Vertical
+				_scrollKey === 'y'
 					? cache.scrollData.scrollOffsetY
 					: cache.scrollData.scrollOffsetX,
 				itemOffsets,
 				overscan,
 				cache.scrollData.scrollForward
 			);
+
+			if (cache._loadMore || isFetching) return;
+			//if (isFetching) return; // resize event from outside
+			if (msDataRef.current.length < items.length) return; // loadMore() loadMoreIndex
 
 			// loadMore bug?-> containerStyles totalsize or msDataRef[last]?
 			if (isScrolling && isSameRange(cache.visibleItemRange, range)) {
@@ -156,12 +163,17 @@ export function useVirtualList<
 
 			setCacheValue({ key: 'visibleItemRange', value: range });
 
-			console.log('-- RANGE:: ', range);
+			console.log('-- RANGE:: ', range, cache._loadMore, isFetching);
 
+			// // loadMore less items are fetched than visible
+			// if (range.length > msDataRef.current.length) return;
+
+			// loadMore() loadMoreIndex for loop instead of map to ensure items are measured,
+			// because diff. msDataRef/items (size not defined)-> new items are fetched and not jet measured
 			const visibleItems = range.map(
 				(itemIndex): VisibleItemDescriptor<ItemType> => {
 					const item = items[itemIndex];
-					const size = msDataRef.current[itemIndex].size;
+					const size = msDataRef.current[itemIndex].size || 0;
 					const offset = msDataRef.current[itemIndex].start;
 
 					// todo return msDataRef, listDirection in other: {} eg.
@@ -186,13 +198,14 @@ export function useVirtualList<
 			itemSize,
 			items,
 			listDirection,
-			//listSize,
 			msDataRef,
 			overscan,
 			setCacheValue,
 			useWindowScroll,
 			containerStyles,
 			_sizeKey,
+			_scrollKey,
+			isFetching,
 		]
 	);
 
@@ -208,17 +221,25 @@ export function useVirtualList<
 	 *
 	 * */
 	useIsomorphicLayoutEffect(() => {
+		if (xinnerRef) refInnerContainer.current = xinnerRef.current;
+		if (xouterRef) refOuterContainer.current = xouterRef.current;
+	}, [xouterRef, xinnerRef]);
+
+	useIsomorphicLayoutEffect(() => {
 		if (!items[0] || itemOffsets.length <= 0) return;
+		//if (cache._loadMore) return;
+		if (_resize) return; // resize event from outside
+		if (msDataRef.current.length < items.length) return; // loadMore() loadMoreIndex
 
-		if (cache._loadMore) return;
-
-		// init ok, resize comes from outside -> prevent recalcs/rerender
-		if (_resize) return;
+		if (isMounted.current) return;
 
 		const initVisibleRange = visibleItemRange({
 			itemOffsets: itemOffsets,
 			isScrolling: false,
 		});
+
+		isMounted.current = true;
+
 		console.log(
 			':: INIT :: ',
 			itemOffsets,
@@ -226,13 +247,7 @@ export function useVirtualList<
 			'msDataRef ',
 			msDataRef
 		);
-	}, [items, items.length, itemOffsets, _resize]); //xouterRef, xinnerRef itemOffsets _resize
-
-	useIsomorphicLayoutEffect(() => {
-		if (xinnerRef) refInnerContainer.current = xinnerRef.current;
-		if (xouterRef) refOuterContainer.current = xouterRef.current;
-		//refIsMounted.current = true;
-	}, [xouterRef, xinnerRef]);
+	}, [itemOffsets, _resize]); //xouterRef, xinnerRef items, items.length,
 
 	return {
 		refOuter: refOuterContainer,
@@ -242,6 +257,7 @@ export function useVirtualList<
 		getMeasuredItem,
 		scrollingSpeed: cache.scrollData.scrollSpeed,
 		msDataRef: msDataRef.current,
+		isFetching,
 	};
 }
 

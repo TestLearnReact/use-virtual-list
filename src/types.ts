@@ -13,11 +13,8 @@ export interface IHookReturn<
 	refInner: RefObject<I> | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<I>; | I
 	visibleItems: VisibleItemDescriptor<ItemType>[];
 	containerStyles: IReturnContainerStyles['containerStyles'];
-	// containerStyles: {
-	// 	outer: { height: number; width: number };
-	// 	inner: { innerMargin: number; innerSize: number; totalSize: number };
-	// };
 	msDataRef: Measure[];
+	isFetching: boolean;
 }
 
 export interface Measure {
@@ -70,16 +67,16 @@ export interface IVirtualListProps<
 	O extends HTMLElement = HTMLElement,
 	I extends HTMLElement = O
 > {
-	viewportHeight: number;
-	viewportWidth: number;
+	// viewportHeight: number;
+	// viewportWidth: number;
 	xouterRef?: RefObject<O> | null | undefined; //| O
 	xinnerRef?: RefObject<I> | null | undefined; //| I
 	items: ItemType[];
 	itemSize: number | ItemSizeGetter<ItemType>;
-	listSize?: number;
+	// listSize?: number;
 	listDirection?: Direction;
 	overscan?: number;
 	useWindowScroll?: boolean;
 	loadMoreProps?: LoadMoreType;
-	wait?: number;
+	waitScroll?: number;
 }
