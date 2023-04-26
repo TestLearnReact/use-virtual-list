@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { TSetCachValue } from '../use-cache';
 import { TCacheValues } from '../use-cache/types';
-import { Measure, LoadMoreType } from '../../types';
+import { LoadMoreType } from '../../types';
 import { getLastArrItem } from '../../utils';
 
-export const useLoadMore = <ItemType,>({
+export const useLoadMore = ({
 	cache,
 	loadMoreProps,
 	setCacheValue,
@@ -12,7 +12,6 @@ export const useLoadMore = <ItemType,>({
 	cache: TCacheValues;
 	setCacheValue: TSetCachValue;
 	loadMoreProps?: LoadMoreType;
-	items: ItemType[];
 }) => {
 	useEffect(() => {
 		if (cache.visibleItemRange.length <= 0 || !loadMoreProps) return;

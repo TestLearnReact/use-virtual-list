@@ -100,4 +100,5 @@ export interface IVirtualListProps<
 	loadMoreProps?: LoadMoreType;
 	waitScroll?: number;
 	onScroll: (event: OnScrollEvent) => void;
+	scrollSpeedSkip?: number;
 }

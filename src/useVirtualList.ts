@@ -3,6 +3,7 @@ import {
 	Direction,
 	IHookReturn,
 	IVirtualListProps,
+	OnScrollEvent,
 	VisibleItemDescriptor,
 } from './types';
 import {
@@ -37,6 +38,8 @@ export function useVirtualList<
 	loadMoreProps,
 	useWindowScroll = false,
 	waitScroll,
+	onScroll,
+	scrollSpeedSkip,
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	const refOuterContainer = useRef<O | null>(null);
 	const refInnerContainer = useRef<I | null>(null);
@@ -77,29 +80,38 @@ export function useVirtualList<
 		_sizeKey,
 	});
 
-	// /** Fetch more data */
-	// const { isFetching } = useLoadMore({
-	// 	cache,
-	// 	msDataRef,
-	// 	loadMoreProps,
-	// 	setCacheValue,
-	// });
-
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
+			const scrollSpeed =
+				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
+				(Date.now() - prevData.timestamp);
+
 			setCacheValue({
 				key: 'scrollData',
 				value: {
 					scrollOffsetX: currData.x,
 					scrollOffsetY: currData.y,
-					scrollSpeed:
-						Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
-						(Date.now() - prevData.timestamp),
+					scrollSpeed,
 					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
 				},
 			});
 
-			// console.log('scroll: ', currData.y, currData.x, isFetching);
+			onScroll({ currData, prevData });
+
+			if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
+				if (cache._timerScrollStop !== null) {
+					clearTimeout(cache._timerScrollStop);
+				}
+				cache._timerScrollStop = setTimeout(function () {
+					if (scrollSpeed > scrollSpeedSkip) {
+						visibleItemRange({
+							itemOffsets: itemOffsets,
+							isScrolling: true,
+						});
+					}
+				}, 1000);
+				return;
+			}
 
 			// visible rows [0, 1, ...,7]
 			visibleItemRange({
@@ -112,6 +124,7 @@ export function useVirtualList<
 			? { useWindowScroll: true }
 			: { element: refOuterContainer },
 		wait: waitScroll,
+		deps: [listDirection],
 	});
 
 	const visibleItemRange = useCallback(
@@ -125,6 +138,7 @@ export function useVirtualList<
 			if (
 				itemOffsets.length <= 0 ||
 				!items[0] ||
+				msDataRef.current.length < items.length ||
 				(cache.visibleItemRange[0] !== -1 &&
 					isScrolling &&
 					!needNewCalcVisbleRange({
@@ -137,6 +151,7 @@ export function useVirtualList<
 			) {
 				return [];
 			}
+
 			const range = getExtendedVisibleItemRange(
 				containerStyles.outerContainerStyle[_sizeKey],
 				itemSize,
@@ -149,21 +164,17 @@ export function useVirtualList<
 				cache.scrollData.scrollForward
 			);
 
-			if (cache._loadMore || isFetching) return;
-			//if (isFetching) return; // resize event from outside
-			if (msDataRef.current.length < items.length) return; // loadMore() loadMoreIndex
-
 			// loadMore bug?-> containerStyles totalsize or msDataRef[last]?
-			if (isScrolling && isSameRange(cache.visibleItemRange, range)) {
-				return range;
-			}
-			// if (isSameRange(cache.visibleItemRange, range)) {
+			// if (isScrolling && isSameRange(cache.visibleItemRange, range)) {
 			// 	return range;
 			// }
+			if (isSameRange(cache.visibleItemRange, range)) {
+				return range;
+			}
 
 			setCacheValue({ key: 'visibleItemRange', value: range });
 
-			console.log('-- RANGE:: ', range, cache._loadMore, isFetching);
+			//console.log('-- RANGE:: ', range, cache._loadMore, isFetching);
 
 			// // loadMore less items are fetched than visible
 			// if (range.length > msDataRef.current.length) return;
@@ -176,13 +187,11 @@ export function useVirtualList<
 					const size = msDataRef.current[itemIndex].size || 0;
 					const offset = msDataRef.current[itemIndex].start;
 
-					// todo return msDataRef, listDirection in other: {} eg.
 					return {
 						item,
 						itemIndex,
 						size,
 						offset,
-						listDirection,
 					};
 				}
 			);
@@ -205,7 +214,6 @@ export function useVirtualList<
 			containerStyles,
 			_sizeKey,
 			_scrollKey,
-			isFetching,
 		]
 	);
 
@@ -227,11 +235,9 @@ export function useVirtualList<
 
 	useIsomorphicLayoutEffect(() => {
 		if (!items[0] || itemOffsets.length <= 0) return;
-		//if (cache._loadMore) return;
-		if (_resize) return; // resize event from outside
-		if (msDataRef.current.length < items.length) return; // loadMore() loadMoreIndex
+		if (_resize || isMounted.current) return; // resize event from outside
 
-		if (isMounted.current) return;
+		console.log('isFetching I', isFetching, cache._loadMore);
 
 		const initVisibleRange = visibleItemRange({
 			itemOffsets: itemOffsets,
@@ -257,7 +263,7 @@ export function useVirtualList<
 		getMeasuredItem,
 		scrollingSpeed: cache.scrollData.scrollSpeed,
 		msDataRef: msDataRef.current,
-		isFetching,
+		isFetching: cache._loadMore,
 	};
 }
 
