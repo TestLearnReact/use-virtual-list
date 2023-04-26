@@ -1,115 +1,157 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ISubProps } from '../../types';
-import { useVirtualList } from '../../../src';
+import {
+	LoadMoreEvent,
+	LoadMoreReturn,
+	OnScrollEvent,
+	useVirtualList,
+} from '../../../src';
 import { IDataItem } from '../../data';
 
-// const isItemLoadedArr: boolean[] = [];
-// type TLoadData = (
-// 	event: LoadMoreEvent,
-// 	setComments: React.Dispatch<React.SetStateAction<IDataItem[]>>
-// ) => Promise<void>;
+const isItemLoadedArr: boolean[] = [];
 
-// const loadData: TLoadData = async (event, setComments) => {
-// 	const { loadIndex, startIndex, stopIndex } = event;
-
-// 	// Set the state of a batch items as `true`
-// 	// to avoid the callback from being invoked repeatedly
-// 	isItemLoadedArr[loadIndex] = true;
-
-// 	try {
-// 		//debugger;
-// 		// const { data: comments } = await axios(`/comments?postId=${loadIndex + 1}`);
-// 		const comments = data.slice(startIndex, stopIndex + 1);
-// 		console.log('SET SET');
-
-// 		setComments((prevComments) => {
-// 			const nextComments = [...prevComments];
-// 			//const nextComments = [];
-
-// 			comments.forEach((comment) => {
-// 				nextComments[comment.id] = comment;
-// 			});
-
-// 			return nextComments;
-// 		});
-// 	} catch (err) {
-// 		// If there's an error set the state back to `false`
-// 		isItemLoadedArr[loadIndex] = false;
-// 		// Then try again
-// 		loadData(event, setComments);
-// 	}
-// };
+type TLoadData = (
+	event: LoadMoreEvent,
+	setData: React.Dispatch<React.SetStateAction<IDataItem[]>>
+) => Promise<LoadMoreReturn>;
 
 export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
-	listHeight,
-	listWidth,
-	data,
+	data: inputData,
 }) => {
+	const [dataFetched, setDataFetched] = useState<IDataItem[]>([]);
+
+	const refScrollData = useRef<OnScrollEvent>();
+
+	const loadData: TLoadData = useCallback(
+		async (event, setData) => {
+			const { loadIndex, startIndex, stopIndex } = event;
+
+			isItemLoadedArr[loadIndex] = true;
+			try {
+				const dataFetched = inputData.slice(startIndex, stopIndex + 1);
+
+				if (dataFetched.length <= 0) {
+					isItemLoadedArr[loadIndex] = false;
+					return { hasFetchedMore: false };
+				}
+
+				setData((prevData) => {
+					const nextComments = [...prevData];
+					dataFetched.forEach((item) => {
+						nextComments[item.id] = item;
+					});
+					return nextComments;
+				});
+
+				console.log('SET SET', startIndex, stopIndex + 1, loadIndex);
+
+				return { hasFetchedMore: true };
+			} catch (err) {
+				isItemLoadedArr[loadIndex] = false;
+				loadData(event, setData);
+				return { hasFetchedMore: false };
+			}
+		},
+		[inputData]
+	);
+
 	const {
 		visibleItems,
 		containerStyles,
-		msDataRef,
 		refOuter: refOuterWrapper,
 		refInner: refInnerWrapper,
+		isFetching,
 	} = useVirtualList<IDataItem, HTMLDivElement, HTMLDivElement>({
-		viewportHeight: 100,
-		viewportWidth: 100,
-		itemSize: 280,
-		listSize: 843, //listWidth,
+		itemSize: 400,
 		listDirection: 0,
 		overscan: 1,
 		useWindowScroll: true,
-		items: data,
+		items: dataFetched,
+		loadMoreProps: {
+			loadMoreCount: 25, //5, //4,
+			isItemLoaded: (i) => {
+				return (
+					dataFetched.length >= 100 ||
+					(isItemLoadedArr && isItemLoadedArr[i] == true)
+				);
+			},
+			loadMore: async (event) => {
+				return await loadData(event, setDataFetched);
+			},
+		},
+		onScroll: (e) => {
+			refScrollData.current = e;
+		},
+		waitScroll: 40,
 	});
 
-	console.log('rerender: ', containerStyles, visibleItems);
+	if (isFetching) return null;
+
+	const shouldRender =
+		!isFetching && containerStyles.innerContainerStyle.totalSize > 0; // &&
+
+	console.log('rerender: ', shouldRender, visibleItems);
 
 	return (
-		<div
-			style={{
-				height: Math.max(containerStyles.innerContainerStyle.totalSize, 601),
-			}}
-		>
-			<div
-				ref={refInnerWrapper}
-				className="_inner"
-				style={{
-					position: 'relative',
-					top: 60,
-					left: 60,
-					width: '100%',
-					minHeight: '100%',
-					height: Math.max(containerStyles.innerContainerStyle.totalSize, 601),
-				}}
-			>
-				{visibleItems.map((item) => (
-					<div
-						key={item.item.id}
-						style={{
-							position: 'absolute',
-							top: item.offset,
-							left: 0,
-							height: item.size,
-						}}
-					>
-						{item.item.id}
-					</div>
-				))}
-			</div>
+		<>
 			<div
 				ref={refOuterWrapper}
 				className="_outer"
 				style={{
-					position: 'fixed',
+					position: 'absolute',
+					height: '100vh',
+					marginLeft: 0,
 					top: 60,
 					left: 60,
-					height: '90%',
-					width: '100%',
+					right: 0,
+					overflow: 'inherit',
+					willChange: 'transform',
+					WebkitOverflowScrolling: 'touch',
 					backgroundColor: 'beige',
-					scrollbarWidth: 'none',
-					visibility: 'collapse',
 				}}
-			></div>
-		</div>
+			>
+				<div
+					ref={refInnerWrapper}
+					className="_inner"
+					style={{
+						position: 'absolute',
+						top: 0,
+						left: 0,
+						height: containerStyles.innerContainerStyle.totalSize,
+						width: '100%',
+					}}
+				>
+					{shouldRender ? (
+						visibleItems.map((item) => {
+							return (
+								<div
+									key={item.item.id}
+									style={{
+										position: 'absolute',
+										top: item.offset,
+										paddingLeft: 0,
+										height: item.size,
+									}}
+								>
+									{item.item.id}
+								</div>
+							);
+						})
+					) : (
+						<div
+							style={{
+								position: 'absolute',
+								top: visibleItems[visibleItems.length - 1]?.offset,
+								paddingLeft: 0,
+								height: visibleItems[0]?.size,
+								//backgroundColor: 'black',
+							}}
+						>
+							SCROLL...
+						</div>
+					)}
+				</div>
+			</div>
+		</>
 	);
 };
