@@ -4,7 +4,7 @@ import { TCacheValues } from '../use-cache/types';
 import { Measure, LoadMoreType } from '../../types';
 import { getLastArrItem } from '../../utils';
 
-export const useLoadMore = ({
+export const useLoadMore = <ItemType,>({
 	cache,
 	loadMoreProps,
 	setCacheValue,
@@ -12,6 +12,7 @@ export const useLoadMore = ({
 	cache: TCacheValues;
 	setCacheValue: TSetCachValue;
 	loadMoreProps?: LoadMoreType;
+	items: ItemType[];
 }) => {
 	useEffect(() => {
 		if (cache.visibleItemRange.length <= 0 || !loadMoreProps) return;
@@ -38,13 +39,24 @@ export const useLoadMore = ({
 				value: true,
 			});
 
-			loadMore({
-				startIndex,
-				stopIndex,
-				loadIndex,
-				scrollOffset: cache.scrollData.scrollOffsetY,
-				userScroll: true,
-			});
+			(async () => {
+				const { hasFetchedMore } = await loadMore({
+					startIndex,
+					stopIndex,
+					loadIndex,
+					scrollOffset: cache.scrollData.scrollOffsetY, //todo x
+					userScroll: true,
+				});
+
+				// end of list, no new items are fetched in loadMore(), _loadMore doesn´t change to false cause no state change
+				// maybe hasMore parameter in loadMore() or return has fetched more => Promise<boolean>
+				if (!hasFetchedMore) {
+					setCacheValue({
+						key: '_loadMore',
+						value: false,
+					});
+				}
+			})();
 
 			setCacheValue({
 				key: 'prevVStop',

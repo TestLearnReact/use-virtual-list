@@ -1,4 +1,4 @@
-import { CSSProperties, RefCallback, RefObject } from 'react';
+import { CSSProperties, RefCallback, RefObject, UIEventHandler } from 'react';
 import { IContainerStyle, IReturnContainerStyles } from './hooks';
 
 export interface IHookReturn<
@@ -6,7 +6,7 @@ export interface IHookReturn<
 	O extends HTMLElement = HTMLElement,
 	I extends HTMLElement = O
 > {
-	// // onScroll: UIEventHandler;
+	// onScroll: UIEventHandler;
 	getMeasuredItem: MeasuredItemGetter; // ItemOffsetGetter;
 	scrollingSpeed: number;
 	refOuter: RefObject<O> | null | undefined; //React.MutableRefObject<O | undefined>// RefCallback<O>; | O
@@ -44,9 +44,26 @@ export type VisibleItemDescriptor<ItemType> = {
 	itemIndex: number;
 	size: number;
 	offset: number;
-	listDirection: Direction;
+	//listDirection: Direction;
 	//style: CSSProperties;
 };
+
+export interface OnScrollEvent {
+	// readonly scrollOffsetX: number;
+	// readonly scrollOffsetY: number;
+	// readonly scrollSpeed: number;
+	// readonly scrollForward: boolean;
+	currData: {
+		x: number;
+		y: number;
+		timestamp: number;
+	};
+	prevData: {
+		x: number;
+		y: number;
+		timestamp: number;
+	};
+}
 
 export interface LoadMoreEvent {
 	startIndex: number;
@@ -56,10 +73,13 @@ export interface LoadMoreEvent {
 	readonly userScroll: boolean;
 }
 
+export type LoadMoreReturn = { hasFetchedMore: boolean };
+
 export type LoadMoreType = {
 	isItemLoaded: (index: number) => boolean;
 	loadMoreCount: number;
-	loadMore: (event: LoadMoreEvent) => void;
+	// loadMore: (event: LoadMoreEvent) => void;
+	loadMore: (event: LoadMoreEvent) => Promise<LoadMoreReturn>;
 };
 
 export interface IVirtualListProps<
@@ -79,4 +99,5 @@ export interface IVirtualListProps<
 	useWindowScroll?: boolean;
 	loadMoreProps?: LoadMoreType;
 	waitScroll?: number;
+	onScroll: (event: OnScrollEvent) => void;
 }
