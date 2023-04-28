@@ -80,45 +80,250 @@ export function useVirtualList<
 		_sizeKey,
 	});
 
+	const test = useRef(false);
+	const shouldRender = useRef(true);
+
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			const scrollSpeed =
+			let wait = 0;
+			let scrollSpeed = 0;
+
+			scrollSpeed = Math.floor(
 				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
-				(Date.now() - prevData.timestamp);
+					(Date.now() - prevData.timestamp)
+			);
 
-			setCacheValue({
-				key: 'scrollData',
-				value: {
-					scrollOffsetX: currData.x,
-					scrollOffsetY: currData.y,
-					scrollSpeed,
-					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
-				},
-			});
-
-			onScroll({ currData, prevData });
-
-			if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
-				if (cache._timerScrollStop !== null) {
-					clearTimeout(cache._timerScrollStop);
+			if (scrollSpeedSkip) {
+				// do not render any item until scroll stop
+				if (scrollSpeed > scrollSpeedSkip) {
+					wait = 2000;
+					scrollSpeed = 0;
 				}
-				cache._timerScrollStop = setTimeout(function () {
-					if (scrollSpeed > scrollSpeedSkip) {
-						visibleItemRange({
-							itemOffsets: itemOffsets,
-							isScrolling: true,
-						});
-					}
-				}, 1000);
-				return;
 			}
 
-			// visible rows [0, 1, ...,7]
-			visibleItemRange({
-				itemOffsets: itemOffsets,
-				isScrolling: true,
-			});
+			if (cache._timerScrollStop !== null) {
+				clearTimeout(cache._timerScrollStop);
+			}
+			cache._timerScrollStop = setTimeout(function () {
+				onScroll({ currData, prevData, scrollSpeed }); // todo not defined?
+				setCacheValue({
+					key: 'scrollData',
+					value: {
+						scrollOffsetX: currData.x,
+						scrollOffsetY: currData.y,
+						scrollSpeed,
+						scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+					},
+				});
+
+				visibleItemRange({
+					itemOffsets: itemOffsets,
+					isScrolling: true,
+				});
+			}, wait);
 		},
+
+		// effect: ({ prevData, currData }) => {
+		// 	const last = cache.scrollData.scrollSpeed;
+
+		// 	const scrollSpeed = Math.floor(
+		// 		Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
+		// 			(Date.now() - prevData.timestamp)
+		// 	);
+
+		// 	setCacheValue({
+		// 		key: 'scrollData',
+		// 		value: {
+		// 			scrollOffsetX: currData.x,
+		// 			scrollOffsetY: currData.y,
+		// 			scrollSpeed,
+		// 			scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+		// 		},
+		// 	});
+
+		// 	onScroll({ currData, prevData, scrollSpeed }); // todo not defined?
+
+		// 	if (scrollSpeedSkip) {
+		// 		if (cache._timerScrollStop !== null) {
+		// 			clearTimeout(cache._timerScrollStop);
+		// 		}
+
+		// 		// shouldRender.current = true;
+
+		// 		let wait = 0;
+		// 		if (scrollSpeed > scrollSpeedSkip) {
+		// 			// do not render any item until scroll stop
+		// 			wait = 2000;
+		// 		}
+
+		// 		// shouldRender.current = false;
+
+		// 		cache._timerScrollStop = setTimeout(function () {
+		// 			console.log('# in', scrollSpeed, 'last', last);
+
+		// 			// shouldRender.current = true;
+
+		// 			onScroll({ currData, prevData, scrollSpeed: 0 }); // todo not defined?
+		// 			setCacheValue({
+		// 				key: 'scrollData',
+		// 				value: {
+		// 					scrollOffsetX: currData.x,
+		// 					scrollOffsetY: currData.y,
+		// 					scrollSpeed: 0,
+		// 					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+		// 				},
+		// 			});
+
+		// 			visibleItemRange({
+		// 				itemOffsets: itemOffsets,
+		// 				isScrolling: true,
+		// 			});
+		// 		}, wait);
+
+		// 		return;
+
+		// 		// if (scrollSpeed > scrollSpeedSkip) {
+		// 		// 	shouldRender.current = false;
+
+		// 		// 	cache._timerScrollStop = setTimeout(function () {
+		// 		// 		console.log('# in', scrollSpeed, 'last', last);
+
+		// 		// 		shouldRender.current = true;
+
+		// 		// 		onScroll({ currData, prevData, scrollSpeed: 0 }); // todo not defined?
+		// 		// 		setCacheValue({
+		// 		// 			key: 'scrollData',
+		// 		// 			value: {
+		// 		// 				scrollOffsetX: currData.x,
+		// 		// 				scrollOffsetY: currData.y,
+		// 		// 				scrollSpeed: 0,
+		// 		// 				scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+		// 		// 			},
+		// 		// 		});
+
+		// 		// 		// visibleItemRange({
+		// 		// 		// 	itemOffsets: itemOffsets,
+		// 		// 		// 	isScrolling: true,
+		// 		// 		// });
+		// 		// 	}, t);
+		// 		// }
+		// 	}
+
+		// 	// shouldRender.current &&
+		// 	// 	visibleItemRange({
+		// 	// 		itemOffsets: itemOffsets,
+		// 	// 		isScrolling: true,
+		// 	// 	});
+
+		// 	// // test.current = false;
+
+		// 	// // if (cache._timerScrollStop !== null) {
+		// 	// // 	clearTimeout(cache._timerScrollStop);
+		// 	// // }
+
+		// 	// // if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
+		// 	// // 	// if (cache._timerScrollStop !== null) {
+		// 	// // 	// 	clearTimeout(cache._timerScrollStop);
+		// 	// // 	// }
+		// 	// // 	cache._timerScrollStop = setTimeout(function () {
+		// 	// // 		console.log('# in', scrollSpeed, 'last', last);
+
+		// 	// // 		onScroll({ currData, prevData, scrollSpeed: 0 }); // todo not defined?
+		// 	// // 		setCacheValue({
+		// 	// // 			key: 'scrollData',
+		// 	// // 			value: {
+		// 	// // 				scrollOffsetX: currData.x,
+		// 	// // 				scrollOffsetY: currData.y,
+		// 	// // 				scrollSpeed: 0,
+		// 	// // 				scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+		// 	// // 			},
+		// 	// // 		});
+
+		// 	// // 		visibleItemRange({
+		// 	// // 			itemOffsets: itemOffsets,
+		// 	// // 			isScrolling: true,
+		// 	// // 		});
+		// 	// // 	}, 2000);
+
+		// 	// // 	return;
+		// 	// // } else {
+		// 	// // 	// if (
+		// 	// // 	// 	cache._timerScrollStop !== null &&
+		// 	// // 	// 	scrollSpeedSkip &&
+		// 	// // 	// 	scrollSpeed > scrollSpeedSkip
+		// 	// // 	// ) {
+		// 	// // 	// 	test.current = true;
+		// 	// // 	// 	console.log('# out', scrollSpeed, 'last', last);
+		// 	// // 	// 	//return;
+		// 	// // 	// }
+
+		// 	// // 	console.log('# out', scrollSpeed, 'last', last, cache._timerScrollStop);
+
+		// 	// // 	// visible rows [0, 1, ...,7]
+		// 	// // 	visibleItemRange({
+		// 	// // 		itemOffsets: itemOffsets,
+		// 	// // 		isScrolling: true,
+		// 	// // 	});
+		// 	// // }
+
+		// 	// onScroll({ currData, prevData, scrollSpeed }); // todo not defined?
+		// 	// test.current = false;
+		// 	// //			if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
+		// 	// if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
+		// 	// 	//last
+		// 	// 	if (cache._timerScrollStop !== null) {
+		// 	// 		clearTimeout(cache._timerScrollStop);
+		// 	// 	}
+		// 	// 	cache._timerScrollStop = setTimeout(function () {
+		// 	// 		if (last > scrollSpeedSkip && !test.current) {
+		// 	// 			// odet last
+		// 	// 			console.log(
+		// 	// 				'_stop',
+		// 	// 				scrollSpeed,
+		// 	// 				last,
+		// 	// 				cache.scrollData.scrollSpeed,
+		// 	// 				'test.current',
+		// 	// 				test.current
+		// 	// 			);
+		// 	// 			onScroll({ currData, prevData, scrollSpeed: 0 }); // todo not defined?
+		// 	// 			setCacheValue({
+		// 	// 				key: 'scrollData',
+		// 	// 				value: {
+		// 	// 					scrollOffsetX: currData.x,
+		// 	// 					scrollOffsetY: currData.y,
+		// 	// 					scrollSpeed: 0,
+		// 	// 					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+		// 	// 				},
+		// 	// 			});
+		// 	// 			//test.current = true;
+		// 	// 			visibleItemRange({
+		// 	// 				itemOffsets: itemOffsets,
+		// 	// 				isScrolling: true,
+		// 	// 			});
+		// 	// 		}
+		// 	// 	}, 2000);
+
+		// 	// 	return;
+		// 	// } else {
+		// 	// 	if (cache._timerScrollStop !== null && last > scrollSpeedSkip) {
+		// 	// 		test.current = true;
+		// 	// 		console.log(
+		// 	// 			'out',
+		// 	// 			scrollSpeed,
+		// 	// 			last,
+		// 	// 			cache.scrollData.scrollSpeed,
+		// 	// 			test.current
+		// 	// 		);
+		// 	// 		//return;
+		// 	// 	}
+
+		// 	// 	// visible rows [0, 1, ...,7]
+		// 	// 	visibleItemRange({
+		// 	// 		itemOffsets: itemOffsets,
+		// 	// 		isScrolling: true,
+		// 	// 	});
+		// 	// }
+		// },
 
 		scrollWindowOrElement: useWindowScroll
 			? { useWindowScroll: true }
@@ -235,6 +440,7 @@ export function useVirtualList<
 
 	useIsomorphicLayoutEffect(() => {
 		if (!items[0] || itemOffsets.length <= 0) return;
+		console.log('TTT');
 		if (_resize || isMounted.current) return; // resize event from outside
 
 		console.log('isFetching I', isFetching, cache._loadMore);
