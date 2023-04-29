@@ -80,32 +80,31 @@ export function useVirtualList<
 		_sizeKey,
 	});
 
-	const test = useRef(false);
-	const shouldRender = useRef(true);
-
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
 			let wait = 0;
 			let scrollSpeed = 0;
 
-			scrollSpeed = Math.floor(
-				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
-					(Date.now() - prevData.timestamp)
-			);
+			const lastSpeed = scrollSpeed;
 
-			if (scrollSpeedSkip) {
+			scrollSpeed =
+				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
+				(Date.now() - prevData.timestamp);
+
+			onScroll({ currData, prevData, scrollSpeed }); // todo not defined
+
+			if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
 				// do not render any item until scroll stop
-				if (scrollSpeed > scrollSpeedSkip) {
-					wait = 2000;
-					scrollSpeed = 0;
-				}
+				wait = 400;
+				scrollSpeed = 0;
 			}
 
 			if (cache._timerScrollStop !== null) {
 				clearTimeout(cache._timerScrollStop);
 			}
 			cache._timerScrollStop = setTimeout(function () {
-				onScroll({ currData, prevData, scrollSpeed }); // todo not defined?
+				// can trigger via hook return scrollingSpeed == 0 to prevent double calls or ifs
+				// onScroll({ currData, prevData, scrollSpeed:0 });
 				setCacheValue({
 					key: 'scrollData',
 					value: {
@@ -115,6 +114,10 @@ export function useVirtualList<
 						scrollForward: currData[_scrollKey] > prevData[_scrollKey],
 					},
 				});
+
+				if (wait > 0) {
+					onScroll({ currData, prevData, scrollSpeed: 0 });
+				}
 
 				visibleItemRange({
 					itemOffsets: itemOffsets,
