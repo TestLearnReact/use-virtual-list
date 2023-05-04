@@ -1,5 +1,6 @@
 import { CSSProperties, RefCallback, RefObject, UIEventHandler } from 'react';
 import { IContainerStyle, IReturnContainerStyles } from './hooks';
+import { IScrollData } from './hooks/use-scroll-offset/types';
 
 export interface IHookReturn<
 	ItemType,
@@ -49,20 +50,9 @@ export type VisibleItemDescriptor<ItemType> = {
 };
 
 export interface OnScrollEvent {
-	// readonly scrollOffsetX: number;
-	// readonly scrollOffsetY: number;
-	// readonly scrollSpeed: number;
-	// readonly scrollForward: boolean;
-	currData: {
-		x: number;
-		y: number;
-		timestamp: number;
-	};
-	prevData: {
-		x: number;
-		y: number;
-		timestamp: number;
-	};
+	readonly currData: IScrollData;
+	readonly prevData: IScrollData;
+	scrollSpeed: number;
 }
 
 export interface LoadMoreEvent {
@@ -80,6 +70,11 @@ export type LoadMoreType = {
 	loadMoreCount: number;
 	// loadMore: (event: LoadMoreEvent) => void;
 	loadMore: (event: LoadMoreEvent) => Promise<LoadMoreReturn>;
+};
+
+type SkipRenderType = {
+	scrollSpeedSkip: number;
+	waitRender: number;
 };
 
 export interface IVirtualListProps<
@@ -100,5 +95,7 @@ export interface IVirtualListProps<
 	loadMoreProps?: LoadMoreType;
 	waitScroll?: number;
 	onScroll: (event: OnScrollEvent) => void;
-	scrollSpeedSkip?: number;
+	// scrollSpeedSkip?: number;
+	// waitRender: number;
+	skipRenderProps?: SkipRenderType;
 }

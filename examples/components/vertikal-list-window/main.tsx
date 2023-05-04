@@ -1,11 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ISubProps } from '../../types';
-import {
-	LoadMoreEvent,
-	LoadMoreReturn,
-	OnScrollEvent,
-	useVirtualList,
-} from '../../../src';
+import { LoadMoreEvent, LoadMoreReturn, useVirtualList } from '../../../src';
 import { IDataItem } from '../../data';
 
 const isItemLoadedArr: boolean[] = [];
@@ -19,8 +14,9 @@ export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 	data: inputData,
 }) => {
 	const [dataFetched, setDataFetched] = useState<IDataItem[]>([]);
+	const [speed, setSpeed] = useState<number>(0);
 
-	const refScrollData = useRef<OnScrollEvent>();
+	const refSpeedBigger = useRef<boolean>(false);
 
 	const loadData: TLoadData = useCallback(
 		async (event, setData) => {
@@ -61,18 +57,19 @@ export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 		refOuter: refOuterWrapper,
 		refInner: refInnerWrapper,
 		isFetching,
+		scrollingSpeed,
 	} = useVirtualList<IDataItem, HTMLDivElement, HTMLDivElement>({
-		itemSize: 400,
+		itemSize: 100,
 		listDirection: 0,
 		overscan: 1,
 		useWindowScroll: true,
 		items: dataFetched,
 		loadMoreProps: {
-			loadMoreCount: 25, //5, //4,
+			loadMoreCount: 40,
 			isItemLoaded: (i) => {
 				return (
-					dataFetched.length >= 100 ||
-					(isItemLoadedArr && isItemLoadedArr[i] == true)
+					//dataFetched.length >= 100 ||
+					isItemLoadedArr && isItemLoadedArr[i] == true
 				);
 			},
 			loadMore: async (event) => {
@@ -80,9 +77,18 @@ export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 			},
 		},
 		onScroll: (e) => {
-			refScrollData.current = e;
+			//console.log(e.currData.y);
+			if (e.scrollSpeed > 12 && !refSpeedBigger.current) {
+				refSpeedBigger.current = true;
+				setSpeed(e.scrollSpeed);
+			}
+			if (e.scrollSpeed <= 12 && refSpeedBigger.current) {
+				refSpeedBigger.current = false;
+			}
 		},
 		waitScroll: 40,
+		//scrollSpeedSkip: 12,
+		skipRenderProps: { scrollSpeedSkip: 12, waitRender: 400 },
 	});
 
 	if (isFetching) return null;
@@ -90,7 +96,7 @@ export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 	const shouldRender =
 		!isFetching && containerStyles.innerContainerStyle.totalSize > 0; // &&
 
-	console.log('rerender: ', shouldRender, visibleItems);
+	console.log('rerender: ', visibleItems, scrollingSpeed);
 
 	return (
 		<>
@@ -119,6 +125,7 @@ export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 						left: 0,
 						height: containerStyles.innerContainerStyle.totalSize,
 						width: '100%',
+						backgroundColor: refSpeedBigger.current ? 'beige' : 'white',
 					}}
 				>
 					{shouldRender ? (
@@ -141,10 +148,11 @@ export const VerticalListWindow: React.FC<ISubProps<IDataItem>> = ({
 						<div
 							style={{
 								position: 'absolute',
-								top: visibleItems[visibleItems.length - 1]?.offset,
-								paddingLeft: 0,
-								height: visibleItems[0]?.size,
-								//backgroundColor: 'black',
+								top: 0,
+								left: 0,
+								height: containerStyles.innerContainerStyle.totalSize,
+								width: '100%',
+								backgroundColor: 'black',
 							}}
 						>
 							SCROLL...

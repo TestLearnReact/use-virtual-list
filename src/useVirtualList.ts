@@ -36,7 +36,8 @@ export function useVirtualList<
 	useWindowScroll = false,
 	waitScroll,
 	onScroll,
-	scrollSpeedSkip,
+	// scrollSpeedSkip,
+	skipRenderProps,
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	const refOuterContainer = useRef<O | null>(null);
 	const refInnerContainer = useRef<I | null>(null);
@@ -78,46 +79,115 @@ export function useVirtualList<
 
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			let wait = 0;
+			if (skipRenderProps) {
+				let wait = 0;
+				let scrollSpeed = 0;
+
+				scrollSpeed =
+					Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
+					(Date.now() - prevData.timestamp);
+
+				onScroll({ currData, prevData, scrollSpeed }); // todo not defined
+
+				if (scrollSpeed > skipRenderProps.scrollSpeedSkip) {
+					// do not render any item until scroll stop
+					wait = skipRenderProps.waitRender;
+					scrollSpeed = 0;
+				}
+
+				if (cache._timerScrollStop !== null) {
+					clearTimeout(cache._timerScrollStop);
+				}
+				cache._timerScrollStop = setTimeout(function () {
+					// can trigger via hook return scrollingSpeed == 0 to prevent double calls or ifs
+					// onScroll({ currData, prevData, scrollSpeed:0 });
+					setCacheValue({
+						key: 'scrollData',
+						value: {
+							scrollOffsetX: currData.x,
+							scrollOffsetY: currData.y,
+							scrollSpeed,
+							scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+						},
+					});
+
+					// scroll stop after skip rendering
+					if (wait > 0) {
+						onScroll({ currData, prevData, scrollSpeed });
+					}
+
+					visibleItemRange({
+						itemOffsets: itemOffsets,
+						isScrolling: true,
+					});
+				}, wait);
+
+				return;
+			}
+
+			console.log('NEVER');
+
 			let scrollSpeed = 0;
 
 			scrollSpeed =
 				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
 				(Date.now() - prevData.timestamp);
 
-			onScroll({ currData, prevData, scrollSpeed }); // todo not defined
+			setCacheValue({
+				key: 'scrollData',
+				value: {
+					scrollOffsetX: currData.x,
+					scrollOffsetY: currData.y,
+					scrollSpeed,
+					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+				},
+			});
 
-			if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
-				// do not render any item until scroll stop
-				wait = 400;
-				scrollSpeed = 0;
-			}
+			visibleItemRange({
+				itemOffsets: itemOffsets,
+				isScrolling: true,
+			});
 
-			if (cache._timerScrollStop !== null) {
-				clearTimeout(cache._timerScrollStop);
-			}
-			cache._timerScrollStop = setTimeout(function () {
-				// can trigger via hook return scrollingSpeed == 0 to prevent double calls or ifs
-				// onScroll({ currData, prevData, scrollSpeed:0 });
-				setCacheValue({
-					key: 'scrollData',
-					value: {
-						scrollOffsetX: currData.x,
-						scrollOffsetY: currData.y,
-						scrollSpeed,
-						scrollForward: currData[_scrollKey] > prevData[_scrollKey],
-					},
-				});
+			// let wait = 0;
+			// let scrollSpeed = 0;
 
-				if (wait > 0) {
-					onScroll({ currData, prevData, scrollSpeed });
-				}
+			// scrollSpeed =
+			// 	Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
+			// 	(Date.now() - prevData.timestamp);
 
-				visibleItemRange({
-					itemOffsets: itemOffsets,
-					isScrolling: true,
-				});
-			}, wait);
+			// onScroll({ currData, prevData, scrollSpeed }); // todo not defined
+
+			// if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
+			// 	// do not render any item until scroll stop
+			// 	wait = 400;
+			// 	scrollSpeed = 0;
+			// }
+
+			// if (cache._timerScrollStop !== null) {
+			// 	clearTimeout(cache._timerScrollStop);
+			// }
+			// cache._timerScrollStop = setTimeout(function () {
+			// 	// can trigger via hook return scrollingSpeed == 0 to prevent double calls or ifs
+			// 	// onScroll({ currData, prevData, scrollSpeed:0 });
+			// 	setCacheValue({
+			// 		key: 'scrollData',
+			// 		value: {
+			// 			scrollOffsetX: currData.x,
+			// 			scrollOffsetY: currData.y,
+			// 			scrollSpeed,
+			// 			scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+			// 		},
+			// 	});
+
+			// 	if (wait > 0) {
+			// 		onScroll({ currData, prevData, scrollSpeed });
+			// 	}
+
+			// 	visibleItemRange({
+			// 		itemOffsets: itemOffsets,
+			// 		isScrolling: true,
+			// 	});
+			// }, wait);
 		},
 
 		scrollWindowOrElement: useWindowScroll
