@@ -26,13 +26,10 @@ export function useVirtualList<
 	O extends HTMLElement = HTMLElement,
 	I extends HTMLElement = O
 >({
-	// viewportHeight,
-	// viewportWidth,
 	xouterRef,
 	xinnerRef,
 	items,
 	itemSize,
-	// listSize = 0,
 	listDirection = Direction.Vertical,
 	overscan = 10,
 	loadMoreProps,
@@ -45,7 +42,6 @@ export function useVirtualList<
 	const refInnerContainer = useRef<I | null>(null);
 
 	const { current: refItemSize } = useRef(itemSize);
-	const isMounted = useRef(false);
 
 	const _sizeKey = listDirection == Direction.Vertical ? 'height' : 'width';
 	const _scrollKey = listDirection == Direction.Vertical ? 'y' : 'x';
@@ -85,8 +81,6 @@ export function useVirtualList<
 			let wait = 0;
 			let scrollSpeed = 0;
 
-			const lastSpeed = scrollSpeed;
-
 			scrollSpeed =
 				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
 				(Date.now() - prevData.timestamp);
@@ -116,7 +110,7 @@ export function useVirtualList<
 				});
 
 				if (wait > 0) {
-					onScroll({ currData, prevData, scrollSpeed: 0 });
+					onScroll({ currData, prevData, scrollSpeed });
 				}
 
 				visibleItemRange({
@@ -225,7 +219,7 @@ export function useVirtualList<
 
 	const getMeasuredItem = useCallback(
 		(itemIndex: number) => msDataRef.current[itemIndex],
-		[msDataRef] //  itemOffsets msDataRef.current itemsSnapshotSignature !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		[msDataRef]
 	);
 
 	/**
@@ -241,31 +235,22 @@ export function useVirtualList<
 
 	useIsomorphicLayoutEffect(() => {
 		if (!items[0] || itemOffsets.length <= 0) return;
-		console.log('TTT');
-		if (_resize || isMounted.current) return; // resize event from outside
-
-		console.log('isFetching I', isFetching, cache._loadMore);
+		if (_resize || cache._isMounted) return;
 
 		const initVisibleRange = visibleItemRange({
 			itemOffsets: itemOffsets,
 			isScrolling: false,
 		});
 
-		isMounted.current = true;
+		setCacheValue({ key: '_isMounted', value: true });
 
-		console.log(
-			':: INIT :: ',
-			itemOffsets,
-			initVisibleRange,
-			'msDataRef ',
-			msDataRef
-		);
-	}, [itemOffsets, _resize]); //xouterRef, xinnerRef items, items.length,
+		console.log(':: INIT :: ', itemOffsets, initVisibleRange);
+	}, [itemOffsets, _resize]);
 
 	return {
 		refOuter: refOuterContainer,
 		refInner: refInnerContainer,
-		visibleItems: hookReturnState.visibleItems, // visibleItems,
+		visibleItems: hookReturnState.visibleItems,
 		containerStyles: containerStyles,
 		getMeasuredItem,
 		scrollingSpeed: cache.scrollData.scrollSpeed,
@@ -278,3 +263,5 @@ export function useVirtualList<
 // listSize -> containerStyles ssr/fallback prop?
 
 // https://blog.logrocket.com/when-not-to-use-usememo-react-hook/
+
+// // use itemsSnapshotSignature in eg getMeasuredItem() instead of itemOffsets, msDataRef.current -> currently eslint error !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

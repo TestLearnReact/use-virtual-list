@@ -26,4 +26,5 @@ export type TCacheValues = {
 	};
 	_loadMore: boolean;
 	_timerScrollStop: null | number;
+	_isMounted: boolean;
 };

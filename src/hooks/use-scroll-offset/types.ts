@@ -10,11 +10,10 @@ type IWindowOrElement =
 			useWindowScroll: boolean;
 	  };
 
+export type IScrollData = { x: number; y: number; timestamp: number };
+
 export interface IScrollOffsetProps {
-	effect: (props: {
-		prevData: { x: number; y: number; timestamp: number };
-		currData: { x: number; y: number; timestamp: number };
-	}) => void;
+	effect: (props: { prevData: IScrollData; currData: IScrollData }) => void;
 	scrollWindowOrElement: IWindowOrElement;
 	wait?: number;
 	deps?: DependencyList;
