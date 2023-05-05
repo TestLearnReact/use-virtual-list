@@ -79,56 +79,7 @@ export function useVirtualList<
 
 	useScrollOffset({
 		effect: ({ prevData, currData }) => {
-			if (skipRenderProps) {
-				let wait = 0;
-				let scrollSpeed = 0;
-
-				scrollSpeed =
-					Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
-					(Date.now() - prevData.timestamp);
-
-				onScroll({ currData, prevData, scrollSpeed }); // todo not defined
-
-				if (scrollSpeed > skipRenderProps.scrollSpeedSkip) {
-					// do not render any item until scroll stop
-					wait = skipRenderProps.waitRender;
-					scrollSpeed = 0;
-				}
-
-				if (cache._timerScrollStop !== null) {
-					clearTimeout(cache._timerScrollStop);
-				}
-				cache._timerScrollStop = setTimeout(function () {
-					// can trigger via hook return scrollingSpeed == 0 to prevent double calls or ifs
-					// onScroll({ currData, prevData, scrollSpeed:0 });
-					setCacheValue({
-						key: 'scrollData',
-						value: {
-							scrollOffsetX: currData.x,
-							scrollOffsetY: currData.y,
-							scrollSpeed,
-							scrollForward: currData[_scrollKey] > prevData[_scrollKey],
-						},
-					});
-
-					// scroll stop after skip rendering
-					if (wait > 0) {
-						onScroll({ currData, prevData, scrollSpeed });
-					}
-
-					visibleItemRange({
-						itemOffsets: itemOffsets,
-						isScrolling: true,
-					});
-				}, wait);
-
-				return;
-			}
-
-			console.log('NEVER');
-
 			let scrollSpeed = 0;
-
 			scrollSpeed =
 				Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
 				(Date.now() - prevData.timestamp);
@@ -142,6 +93,41 @@ export function useVirtualList<
 					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
 				},
 			});
+
+			onScroll({ currData, prevData, scrollSpeed }); // todo not defined
+
+			if (skipRenderProps) {
+				let wait = 0;
+
+				if (scrollSpeed > skipRenderProps.scrollSpeedSkip) {
+					// do not render any item until scroll stop
+					wait = skipRenderProps.waitRender;
+					scrollSpeed = 0;
+				}
+
+				if (cache._timerScrollStop !== null) {
+					clearTimeout(cache._timerScrollStop);
+				}
+				cache._timerScrollStop = setTimeout(function () {
+					// scroll stop after skip rendering
+					if (wait > 0) {
+						onScroll({ currData, prevData, scrollSpeed });
+						setCacheValue({
+							key: 'scrollData',
+							value: { ...cache.scrollData, scrollSpeed },
+						});
+					}
+
+					visibleItemRange({
+						itemOffsets: itemOffsets,
+						isScrolling: true,
+					});
+				}, wait);
+
+				return;
+			}
+
+			console.log('NEVER');
 
 			visibleItemRange({
 				itemOffsets: itemOffsets,
@@ -194,7 +180,7 @@ export function useVirtualList<
 			? { useWindowScroll: true }
 			: { element: refOuterContainer },
 		wait: waitScroll,
-		deps: [listDirection],
+		deps: [],
 	});
 
 	const visibleItemRange = useCallback(
@@ -206,18 +192,17 @@ export function useVirtualList<
 			isScrolling: boolean;
 		}) => {
 			if (
-				itemOffsets.length <= 0 ||
-				!items[0] ||
-				msDataRef.current.length < items.length ||
-				(cache.visibleItemRange[0] !== -1 &&
-					isScrolling &&
-					!needNewCalcVisbleRange({
-						msDataRef,
-						cache,
-						useWindowScroll,
-						listDirection,
-						containerStyles,
-					}))
+				isScrolling &&
+				cache.visibleItemRange[0] !== -1 &&
+				!needNewCalcVisbleRange<ItemType>({
+					msDataRef,
+					cache,
+					useWindowScroll,
+					listDirection,
+					containerStyles,
+					items,
+					itemOffsets,
+				})
 			) {
 				return [];
 			}
