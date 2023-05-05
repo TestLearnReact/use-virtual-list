@@ -127,53 +127,10 @@ export function useVirtualList<
 				return;
 			}
 
-			console.log('NEVER');
-
 			visibleItemRange({
 				itemOffsets: itemOffsets,
 				isScrolling: true,
 			});
-
-			// let wait = 0;
-			// let scrollSpeed = 0;
-
-			// scrollSpeed =
-			// 	Math.abs(currData[_scrollKey] - prevData[_scrollKey]) /
-			// 	(Date.now() - prevData.timestamp);
-
-			// onScroll({ currData, prevData, scrollSpeed }); // todo not defined
-
-			// if (scrollSpeedSkip && scrollSpeed > scrollSpeedSkip) {
-			// 	// do not render any item until scroll stop
-			// 	wait = 400;
-			// 	scrollSpeed = 0;
-			// }
-
-			// if (cache._timerScrollStop !== null) {
-			// 	clearTimeout(cache._timerScrollStop);
-			// }
-			// cache._timerScrollStop = setTimeout(function () {
-			// 	// can trigger via hook return scrollingSpeed == 0 to prevent double calls or ifs
-			// 	// onScroll({ currData, prevData, scrollSpeed:0 });
-			// 	setCacheValue({
-			// 		key: 'scrollData',
-			// 		value: {
-			// 			scrollOffsetX: currData.x,
-			// 			scrollOffsetY: currData.y,
-			// 			scrollSpeed,
-			// 			scrollForward: currData[_scrollKey] > prevData[_scrollKey],
-			// 		},
-			// 	});
-
-			// 	if (wait > 0) {
-			// 		onScroll({ currData, prevData, scrollSpeed });
-			// 	}
-
-			// 	visibleItemRange({
-			// 		itemOffsets: itemOffsets,
-			// 		isScrolling: true,
-			// 	});
-			// }, wait);
 		},
 
 		scrollWindowOrElement: useWindowScroll
