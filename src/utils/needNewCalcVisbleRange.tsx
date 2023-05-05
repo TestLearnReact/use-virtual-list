@@ -1,31 +1,34 @@
 import { MutableRefObject } from 'react';
 import { Direction, Measure } from '../types';
 import { IReturnContainerStyles, TCacheValues } from '../hooks';
-// import { TCacheValues } from '../../hooks/custom-hooks/use-cache/types';
-// import { Measure } from '../../types';
 
-export function needNewCalcVisbleRange<
-	O extends HTMLElement = HTMLElement,
-	I extends HTMLElement = O
->({
+export function needNewCalcVisbleRange<ItemType>({
 	msDataRef,
 	cache,
-	///refInnerContainer,
-	///refOuterContainer,
-	///totalSize,
 	useWindowScroll,
 	listDirection,
 	containerStyles,
+
+	itemOffsets,
+	items,
 }: {
 	msDataRef: MutableRefObject<Measure[]>;
 	cache: TCacheValues;
-	///refInnerContainer: React.MutableRefObject<I | undefined>; // todo check type / size as parameter
-	///refOuterContainer: React.RefObject<HTMLElement | undefined>; //React.MutableRefObject<O | undefined>; // todo check type / size as parameter
-	///totalSize: number;
 	useWindowScroll: boolean;
 	listDirection: Direction;
 	containerStyles: IReturnContainerStyles['containerStyles'];
+	itemOffsets: number[];
+	items: ItemType[];
 }) {
+	if (
+		// general rules, scroll independent
+		itemOffsets.length <= 0 ||
+		!items[0] ||
+		msDataRef.current.length < items.length
+	) {
+		return false;
+	}
+
 	const {
 		visibleItemRange,
 		scrollData: { scrollForward, scrollOffsetY, scrollOffsetX },
@@ -87,6 +90,7 @@ export function needNewCalcVisbleRange<
 				break;
 			// last visible item changed
 			case scrollOffset + listSize < last.start - last.size:
+				//debugger;
 				break;
 			default:
 				needNewCalc = false;
