@@ -10,13 +10,14 @@ export const useCache = ({ deps }: { deps?: DependencyList }) => {
 		prevViewportHeight: 0,
 		prevVStop: 0,
 		scrollData: {
-			scrollOffsetX: 0,
-			scrollOffsetY: 0,
+			prevData: { x: 0, y: 0, timestamp: 0 },
+			currData: { x: 0, y: 0, timestamp: 0 },
 			scrollSpeed: 0,
 			scrollForward: true,
 		},
 		_loadMore: false,
 		_timerScrollStop: null,
+		_isMounted: false,
 	});
 
 	const setCacheValue: TSetCachValue = useCallback(({ key, value }) => {

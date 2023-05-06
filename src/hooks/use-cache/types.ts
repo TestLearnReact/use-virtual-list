@@ -1,4 +1,5 @@
 import { LoadMoreEvent } from '../../types'; // todo
+import { IScrollData } from '../use-scroll-offset/types';
 
 export type TSetCachValue = <
 	T extends keyof TCacheValues,
@@ -19,8 +20,8 @@ export type TCacheValues = {
 	prevViewportHeight?: number;
 	prevVStop?: number;
 	scrollData: {
-		scrollOffsetX: number;
-		scrollOffsetY: number;
+		prevData: IScrollData;
+		currData: IScrollData;
 		scrollSpeed: number;
 		scrollForward: boolean;
 	};

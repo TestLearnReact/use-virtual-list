@@ -60,6 +60,7 @@ export function useVirtualList<
 		cache,
 		loadMoreProps,
 		setCacheValue,
+		_scrollKey,
 	});
 
 	const { itemOffsets, itemsSnapshotSignature, msDataRef } =
@@ -87,8 +88,8 @@ export function useVirtualList<
 			setCacheValue({
 				key: 'scrollData',
 				value: {
-					scrollOffsetX: currData.x,
-					scrollOffsetY: currData.y,
+					prevData,
+					currData,
 					scrollSpeed,
 					scrollForward: currData[_scrollKey] > prevData[_scrollKey],
 				},
@@ -114,7 +115,12 @@ export function useVirtualList<
 						onScroll({ currData, prevData, scrollSpeed });
 						setCacheValue({
 							key: 'scrollData',
-							value: { ...cache.scrollData, scrollSpeed },
+							value: {
+								prevData,
+								currData,
+								scrollSpeed,
+								scrollForward: currData[_scrollKey] > prevData[_scrollKey],
+							},
 						});
 					}
 
@@ -159,6 +165,7 @@ export function useVirtualList<
 					containerStyles,
 					items,
 					itemOffsets,
+					_scrollKey,
 				})
 			) {
 				return [];
@@ -168,12 +175,15 @@ export function useVirtualList<
 				containerStyles.outerContainerStyle[_sizeKey],
 				itemSize,
 				items.length,
-				_scrollKey === 'y'
-					? cache.scrollData.scrollOffsetY
-					: cache.scrollData.scrollOffsetX,
+				// _scrollKey === 'y'
+				// 	? cache.scrollData.scrollOffsetY
+				// 	: cache.scrollData.scrollOffsetX,
+				cache.scrollData.currData[_scrollKey],
 				itemOffsets,
 				overscan,
-				cache.scrollData.scrollForward
+				//cache.scrollData.scrollForward
+				cache.scrollData.currData[_scrollKey] >
+					cache.scrollData.prevData[_scrollKey]
 			);
 
 			// loadMore bug?-> containerStyles totalsize or msDataRef[last]?
