@@ -8,10 +8,12 @@ export const useLoadMore = ({
 	cache,
 	loadMoreProps,
 	setCacheValue,
+	_scrollKey,
 }: {
 	cache: TCacheValues;
 	setCacheValue: TSetCachValue;
 	loadMoreProps?: LoadMoreType;
+	_scrollKey: 'x' | 'y';
 }) => {
 	useEffect(() => {
 		if (cache.visibleItemRange.length <= 0 || !loadMoreProps) return;
@@ -43,7 +45,8 @@ export const useLoadMore = ({
 					startIndex,
 					stopIndex,
 					loadIndex,
-					scrollOffset: cache.scrollData.scrollOffsetY, //todo x
+					//scrollOffset: cache.scrollData.scrollOffsetY, //todo x
+					scrollOffset: cache.scrollData.currData[_scrollKey],
 					userScroll: true,
 				});
 
@@ -68,6 +71,7 @@ export const useLoadMore = ({
 		cache.visibleItemRange,
 		cache.scrollData,
 		cache.prevVStop,
+		_scrollKey,
 	]);
 
 	return { isFetching: cache._loadMore };

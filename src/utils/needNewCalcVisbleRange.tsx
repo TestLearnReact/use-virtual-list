@@ -11,6 +11,7 @@ export function needNewCalcVisbleRange<ItemType>({
 
 	itemOffsets,
 	items,
+	_scrollKey,
 }: {
 	msDataRef: MutableRefObject<Measure[]>;
 	cache: TCacheValues;
@@ -19,6 +20,7 @@ export function needNewCalcVisbleRange<ItemType>({
 	containerStyles: IReturnContainerStyles['containerStyles'];
 	itemOffsets: number[];
 	items: ItemType[];
+	_scrollKey: 'y' | 'x';
 }) {
 	if (
 		// general rules, scroll independent
@@ -31,20 +33,20 @@ export function needNewCalcVisbleRange<ItemType>({
 
 	const {
 		visibleItemRange,
-		scrollData: { scrollForward, scrollOffsetY, scrollOffsetX },
+		scrollData: { scrollForward, currData },
 	} = cache;
+
+	const scrollOffset = currData[_scrollKey];
 
 	const {
 		outerContainerStyle: { height: listHeight, width: listWidth, left, top },
 		innerContainerStyle: { totalSize },
 	} = containerStyles;
 
-	let scrollOffset = scrollOffsetY;
 	let listSize = listHeight;
 	let topLeftpos = top;
 
 	if (listDirection === Direction.Horizontal) {
-		scrollOffset = scrollOffsetX;
 		listSize = listWidth;
 		topLeftpos = left;
 	}
