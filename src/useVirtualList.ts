@@ -35,7 +35,6 @@ export function useVirtualList<
 	useWindowScroll = false,
 	waitScroll,
 	onScroll,
-	// scrollSpeedSkip,
 	skipRenderProps,
 }: IVirtualListProps<ItemType, O, I>): IHookReturn<ItemType, O, I> {
 	const refOuterContainer = useRef<O | null>(null);
@@ -141,7 +140,6 @@ export function useVirtualList<
 
 	const visibleItemRange = useCallback(() => {
 		if (
-			cache.visibleItemRange[0] !== -1 &&
 			!needNewCalcVisbleRange<ItemType>({
 				msDataRef,
 				cache,

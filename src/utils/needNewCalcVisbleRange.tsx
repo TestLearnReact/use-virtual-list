@@ -8,7 +8,6 @@ export function needNewCalcVisbleRange<ItemType>({
 	useWindowScroll,
 	listDirection,
 	containerStyles,
-
 	itemOffsets,
 	items,
 	_scrollKey,
@@ -22,6 +21,8 @@ export function needNewCalcVisbleRange<ItemType>({
 	items: ItemType[];
 	_scrollKey: 'y' | 'x';
 }) {
+	if (cache.visibleItemRange[0] == -1) return true;
+
 	if (
 		// general rules, scroll independent
 		itemOffsets.length <= 0 ||
