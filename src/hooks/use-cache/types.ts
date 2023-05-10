@@ -16,8 +16,6 @@ export type TCacheValues = {
 	visibleItemRange: number[];
 	loadMore: (event: LoadMoreEvent) => void;
 	isItemLoaded: (index: number) => boolean;
-	prevViewportWidth?: number;
-	prevViewportHeight?: number;
 	prevVStop?: number;
 	scrollData: {
 		prevData: IScrollData;

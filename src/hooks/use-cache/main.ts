@@ -6,8 +6,6 @@ export const useCache = ({ deps }: { deps?: DependencyList }) => {
 		visibleItemRange: [-1], //
 		loadMore: (event) => null,
 		isItemLoaded: (index) => false,
-		prevViewportWidth: 0,
-		prevViewportHeight: 0,
 		prevVStop: 0,
 		scrollData: {
 			prevData: { x: 0, y: 0, timestamp: 0 },
