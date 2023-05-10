@@ -3,7 +3,6 @@ import {
 	Direction,
 	IHookReturn,
 	IVirtualListProps,
-	OnScrollEvent,
 	VisibleItemDescriptor,
 } from './types';
 import {
@@ -124,19 +123,13 @@ export function useVirtualList<
 						});
 					}
 
-					visibleItemRange({
-						itemOffsets: itemOffsets,
-						isScrolling: true,
-					});
+					visibleItemRange();
 				}, wait);
 
 				return;
 			}
 
-			visibleItemRange({
-				itemOffsets: itemOffsets,
-				isScrolling: true,
-			});
+			visibleItemRange();
 		},
 
 		scrollWindowOrElement: useWindowScroll
@@ -146,98 +139,84 @@ export function useVirtualList<
 		deps: [],
 	});
 
-	const visibleItemRange = useCallback(
-		({
-			itemOffsets,
-			isScrolling,
-		}: {
-			itemOffsets: number[];
-			isScrolling: boolean;
-		}) => {
-			if (
-				isScrolling &&
-				cache.visibleItemRange[0] !== -1 &&
-				!needNewCalcVisbleRange<ItemType>({
-					msDataRef,
-					cache,
-					useWindowScroll,
-					listDirection,
-					containerStyles,
-					items,
-					itemOffsets,
-					_scrollKey,
-				})
-			) {
-				return [];
-			}
-
-			const range = getExtendedVisibleItemRange(
-				containerStyles.outerContainerStyle[_sizeKey],
-				itemSize,
-				items.length,
-				// _scrollKey === 'y'
-				// 	? cache.scrollData.scrollOffsetY
-				// 	: cache.scrollData.scrollOffsetX,
-				cache.scrollData.currData[_scrollKey],
+	const visibleItemRange = useCallback(() => {
+		if (
+			cache.visibleItemRange[0] !== -1 &&
+			!needNewCalcVisbleRange<ItemType>({
+				msDataRef,
+				cache,
+				useWindowScroll,
+				listDirection,
+				containerStyles,
+				items,
 				itemOffsets,
-				overscan,
-				//cache.scrollData.scrollForward
-				cache.scrollData.currData[_scrollKey] >
-					cache.scrollData.prevData[_scrollKey]
-			);
+				_scrollKey,
+			})
+		) {
+			return [];
+		}
 
-			// loadMore bug?-> containerStyles totalsize or msDataRef[last]?
-			// if (isScrolling && isSameRange(cache.visibleItemRange, range)) {
-			// 	return range;
-			// }
-			if (isSameRange(cache.visibleItemRange, range)) {
-				return range;
-			}
-
-			setCacheValue({ key: 'visibleItemRange', value: range });
-
-			//console.log('-- RANGE:: ', range, cache._loadMore, isFetching);
-
-			// // loadMore less items are fetched than visible
-			// if (range.length > msDataRef.current.length) return;
-
-			// loadMore() loadMoreIndex for loop instead of map to ensure items are measured,
-			// because diff. msDataRef/items (size not defined)-> new items are fetched and not jet measured
-			const visibleItems = range.map(
-				(itemIndex): VisibleItemDescriptor<ItemType> => {
-					const item = items[itemIndex];
-					const size = msDataRef.current[itemIndex].size || 0;
-					const offset = msDataRef.current[itemIndex].start;
-
-					return {
-						item,
-						itemIndex,
-						size,
-						offset,
-					};
-				}
-			);
-
-			setHookReturnState({
-				visibleItems: visibleItems,
-			});
-
-			return range;
-		},
-		[
-			cache,
+		const range = getExtendedVisibleItemRange(
+			containerStyles.outerContainerStyle[_sizeKey],
 			itemSize,
-			items,
-			listDirection,
-			msDataRef,
+			items.length,
+			cache.scrollData.currData[_scrollKey],
+			itemOffsets,
 			overscan,
-			setCacheValue,
-			useWindowScroll,
-			containerStyles,
-			_sizeKey,
-			_scrollKey,
-		]
-	);
+			cache.scrollData.scrollForward
+		);
+
+		// loadMore bug?-> containerStyles totalsize or msDataRef[last]?
+		// if (isScrolling && isSameRange(cache.visibleItemRange, range)) {
+		// 	return range;
+		// }
+		if (isSameRange(cache.visibleItemRange, range)) {
+			return range;
+		}
+
+		setCacheValue({ key: 'visibleItemRange', value: range });
+
+		//console.log('-- RANGE:: ', range, cache._loadMore, isFetching);
+
+		// // loadMore less items are fetched than visible
+		// if (range.length > msDataRef.current.length) return;
+
+		// loadMore() loadMoreIndex for loop instead of map to ensure items are measured,
+		// because diff. msDataRef/items (size not defined)-> new items are fetched and not jet measured
+		const visibleItems = range.map(
+			(itemIndex): VisibleItemDescriptor<ItemType> => {
+				const item = items[itemIndex];
+				const size = msDataRef.current[itemIndex].size || 0;
+				const offset = msDataRef.current[itemIndex].start;
+
+				return {
+					item,
+					itemIndex,
+					size,
+					offset,
+				};
+			}
+		);
+
+		setHookReturnState({
+			visibleItems: visibleItems,
+		});
+
+		return range;
+	}, [
+		cache,
+		itemSize,
+		items,
+		listDirection,
+		msDataRef,
+		overscan,
+		setCacheValue,
+		useWindowScroll,
+		containerStyles,
+		_sizeKey,
+		_scrollKey,
+		itemOffsets,
+	]);
 
 	const getMeasuredItem = useCallback(
 		(itemIndex: number) => msDataRef.current[itemIndex],
@@ -259,10 +238,7 @@ export function useVirtualList<
 		if (!items[0] || itemOffsets.length <= 0) return;
 		if (_resize || cache._isMounted) return;
 
-		const initVisibleRange = visibleItemRange({
-			itemOffsets: itemOffsets,
-			isScrolling: false,
-		});
+		const initVisibleRange = visibleItemRange();
 
 		setCacheValue({ key: '_isMounted', value: true });
 
